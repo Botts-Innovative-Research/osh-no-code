@@ -1,16 +1,11 @@
-# [NAME]
+# UI Forms for the No Code Driver
 
-Sensor adapter for [NAME].
 
 ## Configuration
 
-Replace this codeblock in the config.json
+Add this codeblock in the config.json, replacing the `customForms` block inside the `AdminUI` config.
 ```java
-{
-"objClass": "org.sensorhub.ui.AdminUIConfig",
-"widgetSet": "org.sensorhub.ui.SensorHubWidgetSet",
-"bundleRepoUrls": [],
-"customPanels": [],
+
 "customForms": [
 {
 "objClass": "org.sensorhub.ui.CustomUIConfig",
@@ -33,10 +28,4 @@ Replace this codeblock in the config.json
 "uiClass": "com.botts.ui.ProtobufParserConfigForm"
 }
 ],
-"enableLandingPage": false,
-"id": "5cb05c9c-9123-4fa1-8731-ffaa51489678",
-"autoStart": true,
-"moduleClass": "org.sensorhub.ui.AdminUIModule",
-"name": "Admin UI"
-}
 ```
