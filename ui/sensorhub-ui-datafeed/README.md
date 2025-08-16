@@ -4,57 +4,39 @@ Sensor adapter for [NAME].
 
 ## Configuration
 
-Configuring the sensor requires:
-Select ```Sensors``` from the left-hand accordion control and
-right-click for the context-sensitive menu in the accordion control.
-
-- **Module Name:** A name for the instance of the driver
-- **Serial Number:** The platform's serial number, or a unique identifier
-- **Auto Start:** Check the box to start this module when OSH node is launched
-
-Storage:
-Select ```Storage``` from the left-hand accordion control and
-right-click for the context-sensitive menu in the accordion control.
-Use a ```Real-Time Stream Storage Module``` providing the sensor module as the
-
-- **Data Source ID:** Select the identifier for the storage module created in the configuring sensor step,
-  use looking glass to select it from the list of know sensor modules
-- **Auto Start:** Check the box to start this module when OSH node is launched
-- **Process Events:** Check the box if you want events to be stored as new records
-
-And then configure the
-
-- **Storage Config** using a ```Perst Record Storage``` instance providing the
-    - **Storage Path** as the location where the OSH records are to be stored.
-
-SOS Service:
-Select ```Services``` from the left-hand accordion control, then Offerings, then the **+**
-symbol to add a new offering.
-Provide the following:
-
-- **Name:** A name for the offering
-- **Description:** A description of the offering
-- **StorageId:** Select the identifier for the storage module created in the previous step,
-  use looking glass to select it from the list of know storage modules
-- **SensorId:** Select the identifier for the storage module created in the configuring sensor step,
-  use looking glass to select it from the list of known sensor modules
-- **Enable:** Check the box to enable this offering
-
-## Sample Requests
-
-The following are a list of example requests and their respective responses.  
-The **IP ADDRESS** and **PORT** will need to be specified and point to the instance
-of the OpenSensorHub node serving the data.
-
-### [Observed Property] Request
-
-- **HTTP**
-    - http://[IP ADDRESS]:[PORT]/sensorhub/sos?service=SOS&version=2.0&request=GetResult&offering=[URN]
-      &observedProperty=[OBSERVED_PROPERTY]&temporalFilter=phenomenonTime,[START_TIME]/[END_TIME]
-      &replaySpeed=1&responseFormat=application/json
-
-Response:
-
-```
-
+Replace this codeblock in the config.json
+```java
+{
+"objClass": "org.sensorhub.ui.AdminUIConfig",
+"widgetSet": "org.sensorhub.ui.SensorHubWidgetSet",
+"bundleRepoUrls": [],
+"customPanels": [],
+"customForms": [
+{
+"objClass": "org.sensorhub.ui.CustomUIConfig",
+"configClass": "com.botts.impl.sensor.datafeed.DataFeedConfig",
+"uiClass": "com.botts.ui.DataFeedConfigForm"
+},
+{
+"objClass": "org.sensorhub.ui.CustomUIConfig",
+"configClass": "com.botts.api.parser.DataParserConfig",
+"uiClass": "com.botts.ui.DataParserConfigForm"
+},
+{
+"objClass": "org.sensorhub.ui.CustomUIConfig",
+"configClass": "com.botts.api.parser.data.DataField",
+"uiClass": "com.botts.ui.ProtobufParserConfigForm"
+},
+{
+"objClass": "org.sensorhub.ui.CustomUIConfig",
+"configClass": "com.botts.impl.parser.ProtobufDataParserConfig",
+"uiClass": "com.botts.ui.ProtobufParserConfigForm"
+}
+],
+"enableLandingPage": false,
+"id": "5cb05c9c-9123-4fa1-8731-ffaa51489678",
+"autoStart": true,
+"moduleClass": "org.sensorhub.ui.AdminUIModule",
+"name": "Admin UI"
+}
 ```
