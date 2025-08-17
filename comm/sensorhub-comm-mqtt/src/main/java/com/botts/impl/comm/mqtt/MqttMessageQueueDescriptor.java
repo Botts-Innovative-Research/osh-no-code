@@ -15,7 +15,7 @@ public class MqttMessageQueueDescriptor extends JarModuleProvider implements IMo
     @Override
     public String getModuleDescription()
     {
-        return "Communication protocol that can publish/subscribe to messages";
+        return "Communication protocol that can publish/subscribe to MQTT topics";
     }
 
 

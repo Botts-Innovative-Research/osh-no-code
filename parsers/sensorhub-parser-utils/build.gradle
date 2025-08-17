@@ -18,18 +18,12 @@ osgi {
 }
 
 ext.pom >>= {
-  developers {
-    developer {
-      id 'earocorn'
-      name 'Alex Almanza'
-      organization 'Botts Innovative Research'
-      organizationUrl 'http://www.botts-inc.com'
+    developers {
+        developer {
+            id 'earocorn'
+            name 'Alex Almanza'
+            organization 'Botts Innovative Research, Inc'
+            organizationUrl 'https://www.botts-inc.com'
+        }
     }
-    developer {
-      id 'kalynstricklin'
-      name 'Kalyn Stricklin'
-      organization 'Botts Innovative Research'
-      organizationUrl 'http://www.botts-inc.com'
-    }
-  }
 }

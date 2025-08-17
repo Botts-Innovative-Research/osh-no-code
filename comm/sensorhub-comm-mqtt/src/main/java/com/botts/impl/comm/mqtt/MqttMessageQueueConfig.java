@@ -5,14 +5,6 @@ import org.sensorhub.api.config.DisplayInfo;
 
 public class MqttMessageQueueConfig extends MessageQueueConfig {
 
-//    @DisplayInfo.Required
-//    @DisplayInfo(label="Subscribe Topic", desc="A string the broker uses to filter messages for each individual connected client")
-//    public String subTopic;
-//
-//    @DisplayInfo.Required
-//    @DisplayInfo(label="Publish Topic", desc="A string the broker uses to filter messages for each individual connected client")
-//    public String pubTopic;
-
     @DisplayInfo.Required
     @DisplayInfo(label="Client", desc="A unique identifier for client, used by the broker to track connections")
     public String clientId;
@@ -43,12 +35,6 @@ public class MqttMessageQueueConfig extends MessageQueueConfig {
     @DisplayInfo(label="Retain", desc="Check to allow MQTT broker to store the last message sent on the specific topic")
     public boolean retain;
 
-//    @DisplayInfo(label="Last Will and Testament", desc="Allows Client to define a message and topic to be published if the broker client disconnects unexpectedly")
-//    public String lastWillTestament;
-//
-//    @DisplayInfo(label="Clean Session", desc="Check to discard any previous session data, if left unchecked the broker will maintain the session after disconnect.")
-//    public boolean cleanSession;
-
     public enum QoS {
         AT_MOST_ONCE(0),
         AT_LEAST_ONCE(1),
@@ -63,7 +49,7 @@ public class MqttMessageQueueConfig extends MessageQueueConfig {
         WS("ws"),
         WSS("wss"),
         TCP("tcp"),
-        MQTT("mqtt");
+        MQTT("ssl");
 
         final String protocol;
         Protocol(String protocol) { this.protocol = protocol; }

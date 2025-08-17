@@ -3,7 +3,7 @@ ext.details = ''
 version = '1.0.0'
 
 dependencies {
-  implementation 'org.sensorhub:sensorhub-core:' + oshCoreVersion
+    implementation 'org.sensorhub:sensorhub-core:' + oshCoreVersion
 
     implementation project(':sensorhub-parser-utils')
 }
@@ -13,19 +13,19 @@ test {
 }
 
 osgi {
-  manifest {
-    attributes ('Bundle-Vendor': 'Botts Innovative Research, Inc.')
-    attributes ('Bundle-Activator': 'com.botts.impl.utils.parser.xml.Activator')
-  }
+    manifest {
+        attributes ('Bundle-Vendor': 'Botts Innovative Research, Inc.')
+        attributes ('Bundle-Activator': 'com.botts.impl.utils.parser.xml.Activator')
+    }
 }
 
 ext.pom >>= {
-  developers {
-    developer {
-      id 'earocorn'
-      name 'Alex Almanza'
-      organization 'Botts Innovative Research'
-      organizationUrl 'http://www.botts-inc.com'
+    developers {
+        developer {
+            id 'earocorn'
+            name 'Alex Almanza'
+            organization 'Botts Innovative Research, Inc'
+             organizationUrl 'https://www.botts-inc.com'
+        }
     }
-  }
 }

@@ -22,8 +22,8 @@ public class MqttMessageQueue extends AbstractSubModule<MqttMessageQueueConfig> 
     private Thread workerThread;
     MqttClient mqttClient;
 
-    private final BlockingQueue<MessageData> messageQueue = new LinkedBlockingQueue<>();
-    private final Map<String, Map<String, String>> clientReceivedMqttMessage = new HashMap<>();
+//    private final BlockingQueue<MessageData> messageQueue = new LinkedBlockingQueue<>();
+//    private final Map<String, Map<String, String>> clientReceivedMqttMessage = new HashMap<>();
 
 
     /**
@@ -73,16 +73,16 @@ public class MqttMessageQueue extends AbstractSubModule<MqttMessageQueueConfig> 
                     attributes.put("qos", String.valueOf(mqttMessage.getQos()));
                     attributes.put("retained", String.valueOf(mqttMessage.isRetained()));
 
-                    MessageData messageData = new MessageData(attributes, mqttMessage.getPayload());
-                    boolean accepted = messageQueue.offer(messageData);
+//                    MessageData messageData = new MessageData(attributes, mqttMessage.getPayload());
+//                    boolean accepted = messageQueue.offer(messageData);
+//
+//                    if (accepted){
+//                        getLogger().info("Message Arrived");
+//                    }
 
-                    if (accepted){
-                        getLogger().info("Message Arrived");
-                    }
-
-                    Map<String, String> topicPayload = new HashMap<>();
-                    topicPayload.put(topic, new String(mqttMessage.getPayload()));
-                    clientReceivedMqttMessage.put(clientId, topicPayload);
+//                    Map<String, String> topicPayload = new HashMap<>();
+//                    topicPayload.put(topic, new String(mqttMessage.getPayload()));
+//                    clientReceivedMqttMessage.put(clientId, topicPayload);
                 }
 
                 @Override
@@ -97,13 +97,9 @@ public class MqttMessageQueue extends AbstractSubModule<MqttMessageQueueConfig> 
             Thread.sleep(1000);
 
             if(mqttClient.isConnected()) getLogger().info("Connected to MQTT Broker {}", brokerURL);
-        } catch (MqttException e) {
-            throw new SensorHubException("MQTT connection failed", e);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+        } catch (MqttException | InterruptedException e) {
+            throw new SensorHubException("Failed to make connection to MQTT Broker", e);
         }
-
-
     }
 
     /**
@@ -156,7 +152,7 @@ public class MqttMessageQueue extends AbstractSubModule<MqttMessageQueueConfig> 
 
         isRunning.set(true);
 
-        workerThread = new Thread(this, "Mqtt-Thread");
+        workerThread = new Thread(this, "Mqtt-Client-Thread");
         workerThread.start();
 
     }
@@ -166,23 +162,23 @@ public class MqttMessageQueue extends AbstractSubModule<MqttMessageQueueConfig> 
      */
     @Override
     public void run() {
-        while(isRunning.get()){
-            try{
-               MessageData msgData = messageQueue.poll(1000, TimeUnit.MILLISECONDS);
-               if(msgData != null){
-                   for (MessageListener listener: listeners){
-                       try{
-                           getLogger().debug("receiving data: {}", msgData);
-                           listener.receive(msgData.attributes, msgData.payload);
-                       }catch (Exception e){
-                           getLogger().error("Error in message listener", e);
-                       }
-                   }
-               }
-            } catch(Exception e){
-                getLogger().error("Error: ", e);
-            }
-        }
+//        while(isRunning.get()){
+//            try{
+//               MessageData msgData = messageQueue.poll(1000, TimeUnit.MILLISECONDS);
+//               if(msgData != null){
+//                   for (MessageListener listener: listeners){
+//                       try{
+//                           getLogger().debug("receiving data: {}", msgData);
+//                           listener.receive(msgData.attributes, msgData.payload);
+//                       }catch (Exception e){
+//                           getLogger().error("Error in message listener", e);
+//                       }
+//                   }
+//               }
+//            } catch(Exception e){
+//                getLogger().error("Error: ", e);
+//            }
+//        }
     }
 
     /**
@@ -201,9 +197,9 @@ public class MqttMessageQueue extends AbstractSubModule<MqttMessageQueueConfig> 
         } catch (MqttException e) {
             throw new RuntimeException(e);
         }
-
-        messageQueue.clear();
-        clientReceivedMqttMessage.clear();
+//
+//        messageQueue.clear();
+//        clientReceivedMqttMessage.clear();
     }
 
     /**
@@ -227,7 +223,7 @@ public class MqttMessageQueue extends AbstractSubModule<MqttMessageQueueConfig> 
         try {
             mqttClient.publish(config.topicName, payload, config.qos.getValue(), config.retain);
         } catch (MqttException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Failed while publishing message from MQTT Broker", e);
         }
     }
 

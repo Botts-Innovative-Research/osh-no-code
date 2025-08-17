@@ -15,7 +15,7 @@ public class XMLParserDescriptor extends JarModuleProvider implements IModulePro
     @Override
     public String getModuleDescription()
     {
-        return "Parses data formatted in csv";
+        return "Parses data formatted in XML";
     }
 
     /**

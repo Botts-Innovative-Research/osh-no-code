@@ -17,15 +17,6 @@ dependencies {
     embeddedImpl 'com.vaadin:vaadin-compatibility-client-compiled:8.14.3'
     embeddedImpl 'com.vaadin:vaadin-themes:8.14.3'
 
-    implementation project(':sensorhub-parser-csv')
-    implementation project(':sensorhub-parser-json')
-    implementation project(':sensorhub-parser-protobuf')
-    implementation project(':sensorhub-parser-xml')
-    implementation project(':sensorhub-parser-utils')
-
-    implementation("com.google.protobuf:protobuf-java:4.31.1")
-    implementation("com.google.protobuf:protobuf-java-util:4.31.1")
-
     testImplementation('junit:junit:4.13.1')
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 }
@@ -37,7 +28,6 @@ test {
 osgi {
     manifest {
         attributes ('Bundle-Vendor': 'Botts Innovative Research, Inc.')
-        attributes ('Bundle-Activator': 'com.botts.impl.sensor.datafeed.Activator')
     }
 }
 
@@ -47,7 +37,13 @@ ext.pom >>= {
             id 'earocorn'
             name 'Alex Almanza'
             organization 'Botts Innovative Research, Inc.'
-            organizationUrl 'https://botts-inc.com'
+             organizationUrl 'https://www.botts-inc.com'
+        }
+        developer {
+            id 'kalynstricklin'
+            name 'Kalyn Stricklin'
+            organization 'Botts Innovative Research, Inc.'
+             organizationUrl 'https://www.botts-inc.com'
         }
     }
 }

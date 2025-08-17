@@ -9,6 +9,4 @@ public interface IStreamProcessor {
 
    void processStream(InputStream inputStream, Consumer<DataBlock> consumer);
 
-   void stop();
-
 }
