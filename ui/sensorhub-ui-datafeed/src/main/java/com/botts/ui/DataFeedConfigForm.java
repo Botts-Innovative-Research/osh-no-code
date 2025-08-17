@@ -1,10 +1,7 @@
 package com.botts.ui;
 
 import com.botts.api.parser.DataParserConfig;
-import com.vaadin.v7.data.Property;
-import com.vaadin.v7.ui.Field;
 import org.sensorhub.ui.GenericConfigForm;
-import org.sensorhub.ui.api.UIConstants;
 import org.sensorhub.ui.data.*;
 
 import java.util.*;
