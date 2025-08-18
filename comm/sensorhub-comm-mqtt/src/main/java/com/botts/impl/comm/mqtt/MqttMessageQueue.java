@@ -85,13 +85,13 @@ public class MqttMessageQueue extends AbstractSubModule<MqttMessageQueueConfig> 
         mqttClient.setCallback(new MqttCallback() {
             @Override
             public void connectionLost(Throwable throwable) {
-//                if (!mqttClient.isConnected()) {
-//                    try {
-//                        mqttClient.reconnect();
-//                    } catch (MqttException e) {
-//                        throw new RuntimeException(e);
-//                    }
-//                }
+                if (!mqttClient.isConnected()) {
+                    try {
+                        mqttClient.reconnect();
+                    } catch (MqttException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
             }
 
             @Override
