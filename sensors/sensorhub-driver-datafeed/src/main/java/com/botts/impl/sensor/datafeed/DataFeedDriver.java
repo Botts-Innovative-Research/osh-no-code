@@ -88,7 +88,9 @@ public class DataFeedDriver extends AbstractSensorModule<DataFeedConfig> {
 
       // parser types
 
+
         try {
+            //TODO FIX THIS LIEK THE COMM PROVIDERS
             Class<?> clazz = config.dataParserConfig.getDataParserClass();
             Constructor<?> constructor = clazz.getConstructor(config.dataParserConfig.getClass(), DataComponent.class);
             dataParser = (IDataParser) constructor.newInstance(config.dataParserConfig, output.getRecordDescription());
