@@ -1,5 +1,5 @@
-description = 'MQTT APi & Comm'
-ext.details = 'Common API for MQTT service implementations and communication'
+description = 'MQTT API & Comm Provider'
+ext.details = 'Common API for MQTT service implementations and comm provider to publish/subscribe on MQTT topics'
 version = '1.0.1'
 
 dependencies {

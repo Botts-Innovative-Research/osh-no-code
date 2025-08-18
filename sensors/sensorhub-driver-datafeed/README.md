@@ -1,7 +1,5 @@
 # DataFeed Driver
 
-
-
 ## Configuration
 
 ### Communication Configuration

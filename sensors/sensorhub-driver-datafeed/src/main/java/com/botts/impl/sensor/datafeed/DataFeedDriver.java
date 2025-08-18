@@ -165,8 +165,8 @@ public class DataFeedDriver extends AbstractSensorModule<DataFeedConfig> {
                 streamProvider.stop();
             if (messageQueueProvider != null)
                 messageQueueProvider.stop();
-            if (dataStreamProcessor != null)
-                dataStreamProcessor.stop();
+//            if (dataStreamProcessor != null)
+//                dataStreamProcessor.stop();
         } catch (SensorHubException e) {
             reportError("Failed to stop processing", e);
         }
