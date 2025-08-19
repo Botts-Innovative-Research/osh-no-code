@@ -10,8 +10,6 @@ import org.sensorhub.api.common.SensorHubException;
 
 public class CSVDataParser extends AbstractDataParser {
 
-    // TODO Add to config
-    private boolean hasSkippedHeader = false;
     private final CSVDataParserConfig config;
 
     public CSVDataParser(CSVDataParserConfig config, DataComponent outputStructure) {
@@ -25,8 +23,8 @@ public class CSVDataParser extends AbstractDataParser {
         DataBlock dataBlock = getRecordStructure().createDataBlock();
 
         String line = new String(data);
-        if (!hasSkippedHeader) {
-            hasSkippedHeader = true;
+        if (!config.skippedHeader) {
+            config.skippedHeader = true;
             return dataBlock;
         }
         String[] values = line.split(config.delimiter);
