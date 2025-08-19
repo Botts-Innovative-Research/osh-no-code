@@ -5,6 +5,8 @@ import org.eclipse.paho.client.mqttv3.*;
 import org.sensorhub.api.comm.IMessageQueuePush;
 import org.sensorhub.api.common.SensorHubException;
 import org.sensorhub.impl.module.AbstractSubModule;
+import org.vast.util.Asserts;
+
 import javax.net.ssl.SSLSocketFactory;
 import java.util.HashMap;
 import java.util.Map;
@@ -29,9 +31,10 @@ public class MqttMessageQueue extends AbstractSubModule<MqttMessageQueueConfig> 
     public void init(MqttMessageQueueConfig config) throws SensorHubException {
         super.init(config);
 
-        if(config.protocol == null || config.brokerAddress == null || config.topicName == null || config.clientId == null) {
-            throw new SensorHubException("Protocol or Broker address is null");
-        }
+        Asserts.checkNotNull(config.brokerAddress, "Must specify broker address in config");
+        Asserts.checkNotNull(config.protocol, "Must specify protocol in config");
+        Asserts.checkNotNull(config.topicName, "Must specify topic name in config");
+        Asserts.checkNotNull(config.clientId, "Must specify client id in config");
     }
 
     /**
@@ -56,9 +59,7 @@ public class MqttMessageQueue extends AbstractSubModule<MqttMessageQueueConfig> 
 
         if (protocol.equals("wss") || protocol.equals("ssl"))
             connectOptions.setSocketFactory(SSLSocketFactory.getDefault());
-
-        //connectOptions.setSSLProperties(--);
-
+        
         return connectOptions;
     }
 
