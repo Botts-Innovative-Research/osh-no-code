@@ -5,26 +5,23 @@ import org.eclipse.paho.client.mqttv3.*;
 import org.sensorhub.api.comm.IMessageQueuePush;
 import org.sensorhub.api.common.SensorHubException;
 import org.sensorhub.impl.module.AbstractSubModule;
+import org.vast.util.Asserts;
+
 import javax.net.ssl.SSLSocketFactory;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 
-public class MqttMessageQueue extends AbstractSubModule<MqttMessageQueueConfig> implements IMessageQueuePush<MqttMessageQueueConfig>, Runnable {
+public class MqttMessageQueue extends AbstractSubModule<MqttMessageQueueConfig> implements IMessageQueuePush<MqttMessageQueueConfig> {
     private final Set<MessageListener> listeners = new CopyOnWriteArraySet<>();
-    private final AtomicBoolean isRunning = new AtomicBoolean(false);
-    private Thread workerThread;
+
     MqttClient mqttClient;
 
-//    private final BlockingQueue<MessageData> messageQueue = new LinkedBlockingQueue<>();
-//    private final Map<String, Map<String, String>> clientReceivedMqttMessage = new HashMap<>();
-
+    public final static String QUALITY_OF_SERVICE = "qos";
+    public final static String TOPIC_NAME = "topic";
+    public final static String RETAINED = "retained";
 
     /**
      * @param config
@@ -34,72 +31,10 @@ public class MqttMessageQueue extends AbstractSubModule<MqttMessageQueueConfig> 
     public void init(MqttMessageQueueConfig config) throws SensorHubException {
         super.init(config);
 
-        String protocol = config.protocol.getName();
-        String brokerAddress = config.brokerAddress;
-        int port = config.port;
-        String clientId = config.clientId;
-
-        String brokerURL = protocol + "://"+ brokerAddress +":" + port;
-
-        try{
-            mqttClient = new MqttClient(brokerURL, clientId);
-
-            MqttConnectOptions connectOptions = getConnectOptions(config, protocol);
-            getLogger().info("Connecting to MQTT Broker {} ", brokerURL);
-
-
-            mqttClient.setCallback(new MqttCallback() {
-                @Override
-                public void connectionLost(Throwable throwable) {
-                    getLogger().debug("Connection lost...");
-
-                    if(mqttClient.isConnected()) getLogger().debug("Connected");
-                    else {
-                        try {
-                            getLogger().debug("Trying to reconnect");
-                            mqttClient.reconnect();
-                        } catch (MqttException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
-                }
-
-                @Override
-                public void messageArrived(String topic, MqttMessage mqttMessage) throws Exception {
-                    getLogger().debug("MSG Arrived -- topic: '{}', bytes: '{}'", topic, mqttMessage.getPayload().length);
-
-                    Map<String, String> attributes = new HashMap<>();
-                    attributes.put("topic", topic);
-                    attributes.put("qos", String.valueOf(mqttMessage.getQos()));
-                    attributes.put("retained", String.valueOf(mqttMessage.isRetained()));
-
-//                    MessageData messageData = new MessageData(attributes, mqttMessage.getPayload());
-//                    boolean accepted = messageQueue.offer(messageData);
-//
-//                    if (accepted){
-//                        getLogger().info("Message Arrived");
-//                    }
-
-//                    Map<String, String> topicPayload = new HashMap<>();
-//                    topicPayload.put(topic, new String(mqttMessage.getPayload()));
-//                    clientReceivedMqttMessage.put(clientId, topicPayload);
-                }
-
-                @Override
-                public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
-                    getLogger().debug("MSG delivery successful");
-                }
-            });
-
-
-            mqttClient.connect(connectOptions);
-
-            Thread.sleep(1000);
-
-            if(mqttClient.isConnected()) getLogger().info("Connected to MQTT Broker {}", brokerURL);
-        } catch (MqttException | InterruptedException e) {
-            throw new SensorHubException("Failed to make connection to MQTT Broker", e);
-        }
+        Asserts.checkNotNull(config.brokerAddress, "Must specify broker address in config");
+        Asserts.checkNotNull(config.protocol, "Must specify protocol in config");
+        Asserts.checkNotNull(config.topicName, "Must specify topic name in config");
+        Asserts.checkNotNull(config.clientId, "Must specify client id in config");
     }
 
     /**
@@ -108,22 +43,23 @@ public class MqttMessageQueue extends AbstractSubModule<MqttMessageQueueConfig> 
      * @return
      */
     private static MqttConnectOptions getConnectOptions(MqttMessageQueueConfig config, String protocol) {
+
         MqttConnectOptions connectOptions = new MqttConnectOptions();
-        connectOptions.setCleanSession(true);
-        connectOptions.setKeepAliveInterval(60);
-        connectOptions.setConnectionTimeout(10);
-        connectOptions.setAutomaticReconnect(true);
+        connectOptions.setCleanSession(config.cleanSession);
+        connectOptions.setKeepAliveInterval(config.keepAlive);
+        connectOptions.setConnectionTimeout(config.connectionTimeout);
+        connectOptions.setAutomaticReconnect(config.isAutoReconnect);
 
         // auth
-        if(config.username != null && !config.username.isBlank()){
+        if (config.username != null && config.username.trim().length() != 0)
             connectOptions.setUserName(config.username);
-            if(config.password != null)
-                connectOptions.setPassword(config.password.toCharArray());
-        }
 
-        if(protocol.equals("wss"))
+        if (config.password != null && config.password.trim().length() != 0)
+            connectOptions.setPassword(config.password.toCharArray());
+
+        if (protocol.equals("wss") || protocol.equals("ssl"))
             connectOptions.setSocketFactory(SSLSocketFactory.getDefault());
-
+        
         return connectOptions;
     }
 
@@ -133,53 +69,62 @@ public class MqttMessageQueue extends AbstractSubModule<MqttMessageQueueConfig> 
     @Override
     public void start() throws SensorHubException{
 
-        int qos = config.qos.getValue();
+        String protocol = config.protocol.getName();
+        String brokerAddress = config.brokerAddress;
+        String clientId = config.clientId;
+        try {
+            mqttClient = new MqttClient(protocol + "://" + brokerAddress, clientId);
 
-        if(!mqttClient.isConnected()) {
-            throw new SensorHubException("MQTT Client is not connected");
+            MqttConnectOptions connectOptions = getConnectOptions(config, protocol);
+            mqttClient.connect(connectOptions);
+
+        } catch (MqttException e) {
+            throw new RuntimeException("MQTT client failed to connect", e);
         }
 
+        mqttClient.setCallback(new MqttCallback() {
+            @Override
+            public void connectionLost(Throwable throwable) {
+                if (!mqttClient.isConnected()) {
+                    getLogger().debug("MQTT client connection lost");
+                    try {
+                        getLogger().debug("MQTT client reconnecting");
+                        mqttClient.reconnect();
+                    } catch (MqttException e) {
+                        throw new RuntimeException("MQTT Client connection interrupted: ", e);
+                    }
+                }
+            }
 
-        if(config.enableSubscribe){
-            try{
+            @Override
+            public void messageArrived(String topic, MqttMessage mqttMessage) throws Exception {
+                Map<String, String> attributes = new HashMap<>();
+                attributes.put(TOPIC_NAME, topic);
+                attributes.put(QUALITY_OF_SERVICE, String.valueOf(mqttMessage.getQos()));
+                attributes.put(RETAINED, String.valueOf(mqttMessage.isRetained()));
+
+                for (MessageListener listener : listeners) {
+                    listener.receive(attributes, mqttMessage.getPayload());
+                }
+            }
+
+            @Override
+            public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
+                getLogger().debug("managed to deliver: ", iMqttDeliveryToken.isComplete());
+            }
+        });
+
+
+        if (config.enableSubscribe) {
+            try {
                 getLogger().info("Subscribed to topic: {}", config.topicName);
-                mqttClient.subscribe(config.topicName, qos);
+                mqttClient.subscribe(config.topicName, config.qos.getValue());
             } catch (MqttException e) {
                 throw new RuntimeException(e);
             }
         }
-
-
-        isRunning.set(true);
-
-        workerThread = new Thread(this, "Mqtt-Client-Thread");
-        workerThread.start();
-
     }
 
-    /**
-     *
-     */
-    @Override
-    public void run() {
-//        while(isRunning.get()){
-//            try{
-//               MessageData msgData = messageQueue.poll(1000, TimeUnit.MILLISECONDS);
-//               if(msgData != null){
-//                   for (MessageListener listener: listeners){
-//                       try{
-//                           getLogger().debug("receiving data: {}", msgData);
-//                           listener.receive(msgData.attributes, msgData.payload);
-//                       }catch (Exception e){
-//                           getLogger().error("Error in message listener", e);
-//                       }
-//                   }
-//               }
-//            } catch(Exception e){
-//                getLogger().error("Error: ", e);
-//            }
-//        }
-    }
 
     /**
      *
@@ -187,19 +132,16 @@ public class MqttMessageQueue extends AbstractSubModule<MqttMessageQueueConfig> 
      */
     @Override
     public void stop() throws SensorHubException{
-        isRunning.set(false);
 
-        if(mqttClient == null) return;
+        if (mqttClient == null)
+            return;
 
-        try{
+        try {
             mqttClient.disconnect();
             mqttClient.close();
         } catch (MqttException e) {
             throw new RuntimeException(e);
         }
-//
-//        messageQueue.clear();
-//        clientReceivedMqttMessage.clear();
     }
 
     /**
@@ -218,12 +160,32 @@ public class MqttMessageQueue extends AbstractSubModule<MqttMessageQueueConfig> 
      */
     @Override
     public void publish(Map<String, String> attrs, byte[] payload) {
-        if(!config.enablePublish) return;
+
+        if (!config.enablePublish)
+            return;
+
+        MqttMessage mqttMessage = new MqttMessage(payload);
+
+        if (attrs != null) {
+            var qosAttr = attrs.get(QUALITY_OF_SERVICE);
+
+            if (qosAttr != null) {
+                int qos = Integer.parseInt(qosAttr);
+                if (qos >= 0 && qos < MqttMessageQueueConfig.QoS.values().length) {
+                    mqttMessage.setQos(qos);
+                } else {
+                    mqttMessage.setQos(config.qos.getValue());
+                }
+            }
+
+            var retainedAttr = attrs.get(RETAINED);
+            mqttMessage.setRetained(retainedAttr != null  ? Boolean.parseBoolean(qosAttr) : config.retain);
+        }
 
         try {
-            mqttClient.publish(config.topicName, payload, config.qos.getValue(), config.retain);
+            mqttClient.publish(config.topicName, mqttMessage);
         } catch (MqttException e) {
-            throw new RuntimeException("Failed while publishing message from MQTT Broker", e);
+            throw new RuntimeException(e);
         }
     }
 

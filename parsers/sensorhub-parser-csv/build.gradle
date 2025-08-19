@@ -3,7 +3,7 @@ ext.details = ''
 version = '1.0.0'
 
 dependencies {
-  implementation 'org.sensorhub:sensorhub-core:' + oshCoreVersion
+    implementation 'org.sensorhub:sensorhub-core:' + oshCoreVersion
 
     implementation project(':sensorhub-parser-utils')
 }

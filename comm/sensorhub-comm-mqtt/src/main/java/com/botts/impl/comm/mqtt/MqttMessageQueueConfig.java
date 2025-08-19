@@ -14,13 +14,8 @@ public class MqttMessageQueueConfig extends MessageQueueConfig {
     public Protocol protocol = Protocol.TCP;
 
     @DisplayInfo.Required
-    @DisplayInfo(label="Host Address", desc="The hostname or IP address of the MQTT Broker")
+    @DisplayInfo(label="Broker Address", desc="The hostname or IP address and port of the MQTT Broker (e.g. localhost:8282/sensorhub/mqtt")
     public String brokerAddress;
-
-    @DisplayInfo.ValueRange(min=0, max=65535)
-    @DisplayInfo.Required
-    @DisplayInfo(label="Port Number", desc="The port number to connect to on the broker addresses remote host")
-    public int port;
 
     @DisplayInfo.Required
     @DisplayInfo(label="Quality of Service", desc="Determines the reliability of the message delivery (0,1,2)")
@@ -34,6 +29,18 @@ public class MqttMessageQueueConfig extends MessageQueueConfig {
 
     @DisplayInfo(label="Retain", desc="Check to allow MQTT broker to store the last message sent on the specific topic")
     public boolean retain;
+
+    @DisplayInfo(label="Clean Session", desc="Check ")
+    public boolean cleanSession;
+
+    @DisplayInfo(label="Keep Alive Interval", desc="")
+    public int keepAlive = 60;
+
+    @DisplayInfo(label="Connection Timeout", desc="")
+    public int connectionTimeout = 10;
+
+    @DisplayInfo(label="Automatic Reconnect", desc="")
+    public boolean isAutoReconnect = true;
 
     public enum QoS {
         AT_MOST_ONCE(0),
@@ -49,7 +56,7 @@ public class MqttMessageQueueConfig extends MessageQueueConfig {
         WS("ws"),
         WSS("wss"),
         TCP("tcp"),
-        MQTT("ssl");
+        SSL("ssl");
 
         final String protocol;
         Protocol(String protocol) { this.protocol = protocol; }
