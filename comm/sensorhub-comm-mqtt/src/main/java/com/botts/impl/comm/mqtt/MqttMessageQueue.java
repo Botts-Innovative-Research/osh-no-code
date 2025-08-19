@@ -1,7 +1,6 @@
 package com.botts.impl.comm.mqtt;
 
 
-import org.eclipse.jetty.util.BlockingArrayQueue;
 import org.eclipse.paho.client.mqttv3.*;
 import org.sensorhub.api.comm.IMessageQueuePush;
 import org.sensorhub.api.common.SensorHubException;
@@ -10,11 +9,7 @@ import javax.net.ssl.SSLSocketFactory;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 
 public class MqttMessageQueue extends AbstractSubModule<MqttMessageQueueConfig> implements IMessageQueuePush<MqttMessageQueueConfig> {
@@ -33,6 +28,10 @@ public class MqttMessageQueue extends AbstractSubModule<MqttMessageQueueConfig> 
     @Override
     public void init(MqttMessageQueueConfig config) throws SensorHubException {
         super.init(config);
+
+        if(config.protocol == null || config.brokerAddress == null || config.topicName == null || config.clientId == null) {
+            throw new SensorHubException("Protocol or Broker address is null");
+        }
     }
 
     /**
@@ -44,9 +43,9 @@ public class MqttMessageQueue extends AbstractSubModule<MqttMessageQueueConfig> 
 
         MqttConnectOptions connectOptions = new MqttConnectOptions();
         connectOptions.setCleanSession(config.cleanSession);
-        connectOptions.setKeepAliveInterval(60);
-        connectOptions.setConnectionTimeout(10);
-        connectOptions.setAutomaticReconnect(true);
+        connectOptions.setKeepAliveInterval(config.keepAlive);
+        connectOptions.setConnectionTimeout(config.connectionTimeout);
+        connectOptions.setAutomaticReconnect(config.isAutoReconnect);
 
         // auth
         if (config.username != null && config.username.trim().length() != 0)
@@ -79,17 +78,19 @@ public class MqttMessageQueue extends AbstractSubModule<MqttMessageQueueConfig> 
             mqttClient.connect(connectOptions);
 
         } catch (MqttException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("MQTT client failed to connect", e);
         }
 
         mqttClient.setCallback(new MqttCallback() {
             @Override
             public void connectionLost(Throwable throwable) {
                 if (!mqttClient.isConnected()) {
+                    getLogger().debug("MQTT client connection lost");
                     try {
+                        getLogger().debug("MQTT client reconnecting");
                         mqttClient.reconnect();
                     } catch (MqttException e) {
-                        throw new RuntimeException(e);
+                        throw new RuntimeException("MQTT Client connection interrupted: ", e);
                     }
                 }
             }

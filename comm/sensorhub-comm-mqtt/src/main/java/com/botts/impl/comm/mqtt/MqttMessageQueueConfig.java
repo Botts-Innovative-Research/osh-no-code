@@ -33,6 +33,15 @@ public class MqttMessageQueueConfig extends MessageQueueConfig {
     @DisplayInfo(label="Clean Session", desc="Check ")
     public boolean cleanSession;
 
+    @DisplayInfo(label="Keep Alive Interval", desc="")
+    public int keepAlive = 60;
+
+    @DisplayInfo(label="Connection Timeout", desc="")
+    public int connectionTimeout = 10;
+
+    @DisplayInfo(label="Automatic Reconnect", desc="")
+    public boolean isAutoReconnect = true;
+
     public enum QoS {
         AT_MOST_ONCE(0),
         AT_LEAST_ONCE(1),
