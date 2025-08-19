@@ -4,7 +4,7 @@
 ## Configuration
 
 Add this codeblock in the config.json, replacing the `customForms` block inside the `AdminUI` config.
-```java
+```json
 "customForms": [
 {
 "objClass": "org.sensorhub.ui.CustomUIConfig",
