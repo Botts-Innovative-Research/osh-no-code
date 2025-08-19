@@ -1,9 +1,1 @@
- parsers/sensorhub-parser-utils/build
- parsers/sensorhub-parser-json/build
- parsers/sensorhub-parser-xml/build
- parsers/sensorhub-parser-csv/build
- parsers/sensorhub-parser-protobuf/build
- sensors/sensorhub-driver-datafeed/build
- ui/sensorhub-ui-datafeed/build
- comm/sensorhub-comm-kafka/build
- comm/sensorhub-comm-mqtt/build
+**/build/
