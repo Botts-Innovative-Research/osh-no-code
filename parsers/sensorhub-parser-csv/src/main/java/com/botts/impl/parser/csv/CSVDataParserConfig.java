@@ -10,8 +10,8 @@ public class CSVDataParserConfig extends DataParserConfig {
     @DisplayInfo(label="Delimiter", desc="")
     public String delimiter = ",";
 
-    @DisplayInfo(label="Skipped Header", desc="Skip the first row, which contains column headers")
-    public boolean skippedHeader = false;
+    @DisplayInfo(label="Skip Header", desc="Skip the first row, which contains column headers")
+    public boolean skipHeader = false;
 
 
     @Override

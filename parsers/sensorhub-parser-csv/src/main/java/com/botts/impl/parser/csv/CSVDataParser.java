@@ -23,8 +23,8 @@ public class CSVDataParser extends AbstractDataParser {
         DataBlock dataBlock = getRecordStructure().createDataBlock();
 
         String line = new String(data);
-        if (!config.skippedHeader) {
-            config.skippedHeader = true;
+        if (!config.skipHeader) {
+            config.skipHeader = true;
             return dataBlock;
         }
         String[] values = line.split(config.delimiter);
