@@ -86,17 +86,11 @@ public class DataFeedDriver extends AbstractSensorModule<DataFeedConfig> {
             streamProvider = null;
         }
 
-      // parser types
 
-        try {
-            Class<?> clazz = config.dataParserConfig.getDataParserClass();
-            Constructor<?> constructor = clazz.getConstructor(config.dataParserConfig.getClass(), DataComponent.class);
-            dataParser = (IDataParser) constructor.newInstance(config.dataParserConfig, output.getRecordDescription());
-        } catch (Exception e) {
-            streamProvider = null;
-            messageQueueProvider = null;
-            dataParser = null;
-            throw new SensorHubException("Unable to initialize data parser", e);
+        if(dataParser == null && config.dataParserConfig != null){
+            dataParser = getParentHub().getModuleRegistry().loadSubModule(this, config.dataParserConfig, true);
+        }else if(config.dataParserConfig == null){
+            throw new SensorHubException("Data Parser selected but no settings were specified");
         }
 
         startProcessing();
@@ -165,8 +159,8 @@ public class DataFeedDriver extends AbstractSensorModule<DataFeedConfig> {
                 streamProvider.stop();
             if (messageQueueProvider != null)
                 messageQueueProvider.stop();
-            if (dataStreamProcessor != null)
-                dataStreamProcessor.stop();
+//            if (dataStreamProcessor != null)
+//                dataStreamProcessor.stop();
         } catch (SensorHubException e) {
             reportError("Failed to stop processing", e);
         }

@@ -4,7 +4,7 @@
 ## Configuration
 
 Add this codeblock in the config.json, replacing the `customForms` block inside the `AdminUI` config.
-```java
+```json
 
 "customForms": [
 {
@@ -24,7 +24,7 @@ Add this codeblock in the config.json, replacing the `customForms` block inside 
 },
 {
 "objClass": "org.sensorhub.ui.CustomUIConfig",
-"configClass": "com.botts.impl.parser.ProtobufDataParserConfig",
+"configClass": "com.botts.impl.parser.protobuf.ProtobufDataParserConfig",
 "uiClass": "com.botts.ui.ProtobufParserConfigForm"
 }
 ],
