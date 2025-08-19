@@ -18,7 +18,6 @@ import com.botts.api.parser.IStreamProcessor;
 import com.botts.impl.sensor.datafeed.config.MsgQueueCommConfig;
 import com.botts.impl.sensor.datafeed.config.StreamConfig;
 import net.opengis.swe.v20.DataBlock;
-import net.opengis.swe.v20.DataComponent;
 import org.sensorhub.api.comm.ICommProvider;
 import org.sensorhub.api.comm.IMessageQueuePush;
 import org.sensorhub.api.common.SensorHubException;
@@ -27,7 +26,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.vast.util.Asserts;
 import java.io.IOException;
-import java.lang.reflect.Constructor;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
