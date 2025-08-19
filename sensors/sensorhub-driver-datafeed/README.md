@@ -1,8 +1,9 @@
 # DataFeed Driver
 
 **Driver Dependencies:**
-- `sensorhub-ui-datafeed` This module holds the custom configuration forms for the datafeed-driver.You must include the module and update the config.json under the `AdminUI` to include the custom forms:
+Ensure the `sensorhub-ui-datafeed` module is included. This module provides custom configuration forms for the datafeed-driver.
 
+Update `AdminUI` in the `config.json` by adding the following under the `customForms` array:
 ```json
 "customForms": [
 {
@@ -31,17 +32,24 @@
 ## Configuration
 
 ### Communication Configuration
-There are two types of communication providers currently implemented for the data feed driver: Stream Based and Message Queue based communication.
+There are two types of communication providers currently implemented for the data feed driver: Stream-Based and Message Queue based communication.
 
-**Stream Based**
--TCP/IP/UDP
-**Message Queue:**
-- MQTT/ KAFKA/ MessageQueue
+**Stream-Based Communication**
+Used for continuous data streams
+- Example: 
+  - TCP
+  - UDP
+
+**Message Queue Communication:**
+Used for event-driven messaging
+- Example: 
+  - MQTT
+  - Kafka
 
 
 ### Data Parser Configuration
-Select a data parser
-**XML:**
-**JSON:**
-**CSV:**
-**Protobuf:**
+Choose a parser to interpret the incoming data format. The following parsers are currently supported:
+- CSV
+- JSON
+- XML
+- Protobuf

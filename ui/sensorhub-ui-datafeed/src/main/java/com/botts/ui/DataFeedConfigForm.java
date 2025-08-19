@@ -18,17 +18,6 @@ public class DataFeedConfigForm extends GenericConfigForm {
     public Map<String, Class<?>> getPossibleTypes(String propId, BaseProperty<?> prop) {
         Map<String, Class<?>> classList = new LinkedHashMap<>();
 
-        if(propId.equals(PROP_PARSER_CONFIG)) {
-            try
-            {
-                classList.put("Parser", Class.forName("com.botts.api.parser.DataParserConfig"));
-            }
-            catch (ClassNotFoundException e)
-            {
-                getOshLogger().error("Cannot find comm class", e);
-            }
-        }
-
         if(propId.equals(PROP_COMM_TYPE)){
             try
             {
