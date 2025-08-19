@@ -25,7 +25,7 @@ public class CSVDataParser extends AbstractDataParser {
         DataBlock dataBlock = getRecordStructure().createDataBlock();
 
         String line = new String(data);
-        if (!hasSkippedHeader) {
+        if (!config.skipHeader) {
             hasSkippedHeader = true;
             return dataBlock;
         }
