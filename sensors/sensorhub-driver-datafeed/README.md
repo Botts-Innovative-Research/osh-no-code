@@ -36,15 +36,15 @@ There are two types of communication providers currently implemented for the dat
 
 **Stream-Based Communication**
 Used for continuous data streams
-- Example: 
-  - TCP
-  - UDP
+- Example:
+    - TCP
+    - UDP
 
 **Message Queue Communication:**
 Used for event-driven messaging
-- Example: 
-  - MQTT
-  - Kafka
+- Example:
+    - MQTT
+    - Kafka
 
 
 ### Data Parser Configuration
