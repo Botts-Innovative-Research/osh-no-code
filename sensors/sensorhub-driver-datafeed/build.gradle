@@ -1,33 +1,12 @@
-plugins {
-    id 'org.jetbrains.kotlin.jvm'
-}
 description = 'Data Feed'
 ext.details = "A driver for capturing various data feeds"
 version = '1.0.0'
 
 dependencies {
     implementation 'org.sensorhub:sensorhub-core:' + oshCoreVersion
-    implementation 'org.sensorhub:sensorhub-webui-core:' + oshCoreVersion
-    embeddedImpl 'com.vaadin:vaadin-server:8.14.3'
-    embeddedImpl 'com.vaadin:vaadin-push:8.14.3'
-    compileOnly 'com.vaadin:vaadin-client:8.14.3'
-    embeddedImpl 'com.vaadin:vaadin-client-compiled:8.14.3'
-    embeddedImpl 'com.vaadin:vaadin-compatibility-server:8.14.3'
-    compileOnly 'com.vaadin:vaadin-compatibility-client:8.14.3'
-    embeddedImpl 'com.vaadin:vaadin-compatibility-client-compiled:8.14.3'
-    embeddedImpl 'com.vaadin:vaadin-themes:8.14.3'
 
-    implementation project(':sensorhub-parser-csv')
-    implementation project(':sensorhub-parser-json')
-    implementation project(':sensorhub-parser-protobuf')
-    implementation project(':sensorhub-parser-xml')
     implementation project(':sensorhub-parser-utils')
-
-    implementation("com.google.protobuf:protobuf-java:4.31.1")
-    implementation("com.google.protobuf:protobuf-java-util:4.31.1")
-
     testImplementation('junit:junit:4.13.1')
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 }
 
 test {
@@ -53,6 +32,4 @@ ext.pom >>= {
 }
 repositories {
     mavenCentral()
-}
-compileKotlin {
 }

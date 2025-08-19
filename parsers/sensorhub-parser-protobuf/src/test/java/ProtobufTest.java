@@ -1,5 +1,3 @@
-package com.botts.impl.sensor.datafeed;
-
 import com.botts.api.parser.data.BaseDataType;
 import com.botts.api.parser.data.DataField;
 import com.botts.api.parser.data.FieldMapping;
@@ -14,9 +12,8 @@ import org.vast.data.DataRecordImpl;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
-public class ParserTests {
+public class ProtobufTest {
 
     List<DataField> sampleFields;
     List<FieldMapping> sampleMapping;
@@ -35,16 +32,6 @@ public class ParserTests {
         mapping.inputFieldName = "test";
         mapping.outputFieldName = "test";
         sampleMapping.add(mapping);
-    }
-
-    @Test
-    public void testCSV() {
-
-    }
-
-    @Test
-    public void testJSON() {
-
     }
 
     @Test
@@ -72,11 +59,6 @@ public class ParserTests {
         testFields.add(new DataField(3, "etf.ETFMessage.loginmsg.sendrecv", BaseDataType.INTEGER));
         testFields.add(new DataField(3, "etf.ETFMessage.loginmsg", null));
         return testFields;
-    }
-
-    @Test
-    public void testXML() {
-
     }
 
 }

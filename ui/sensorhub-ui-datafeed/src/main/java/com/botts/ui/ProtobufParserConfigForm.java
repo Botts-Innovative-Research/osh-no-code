@@ -16,7 +16,6 @@ import com.vaadin.v7.data.Property;
 import com.vaadin.v7.data.fieldgroup.FieldGroup;
 import com.vaadin.v7.data.util.converter.Converter;
 import com.vaadin.v7.ui.*;
-import org.sensorhub.ui.DisplayUtils;
 import org.sensorhub.ui.FieldWrapper;
 import org.sensorhub.ui.GenericConfigForm;
 import org.sensorhub.ui.data.ContainerProperty;

@@ -61,20 +61,20 @@ public class LineBasedStreamProcessor implements IStreamProcessor {
         }
     }
 
-    @Override
-    public void stop() {
-        logger.debug("Stopping stream processor");
-
-        isRunning.set(false);
-
-        synchronized (taskLock) {
-            if (task != null) {
-                task.cancel(true);
-                task = null;
-            }
-        }
-
-        logger.debug("Stream processor stopped");
-    }
+//    @Override
+//    public void stop() {
+//        logger.debug("Stopping stream processor");
+//
+//        isRunning.set(false);
+//
+//        synchronized (taskLock) {
+//            if (task != null) {
+//                task.cancel(true);
+//                task = null;
+//            }
+//        }
+//
+//        logger.debug("Stream processor stopped");
+//    }
 
 }

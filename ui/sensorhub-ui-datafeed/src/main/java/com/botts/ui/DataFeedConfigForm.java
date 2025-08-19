@@ -1,6 +1,5 @@
 package com.botts.ui;
 
-import com.botts.api.parser.DataParserConfig;
 import org.sensorhub.ui.GenericConfigForm;
 import org.sensorhub.ui.data.*;
 
@@ -18,24 +17,6 @@ public class DataFeedConfigForm extends GenericConfigForm {
     @Override
     public Map<String, Class<?>> getPossibleTypes(String propId, BaseProperty<?> prop) {
         Map<String, Class<?>> classList = new LinkedHashMap<>();
-
-        if(propId.equals(PROP_PARSER_CONFIG)) {
-            ServiceLoader<DataParserConfig> sl = ServiceLoader.load(DataParserConfig.class);
-            var it = sl.iterator();
-
-            while (it.hasNext())
-            {
-                try
-                {
-                    DataParserConfig parserConfig = it.next();
-                    classList.put(parserConfig.getDataParserClass().getSimpleName(), parserConfig.getClass());
-                }
-                catch (ServiceConfigurationError e)
-                {
-                    getOshLogger().error("{}: {}", ServiceConfigurationError.class.getName(), e.getMessage());
-                }
-            }
-        }
 
         if(propId.equals(PROP_COMM_TYPE)){
             try
