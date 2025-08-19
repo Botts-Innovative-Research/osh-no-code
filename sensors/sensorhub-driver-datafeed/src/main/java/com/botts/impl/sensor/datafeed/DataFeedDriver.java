@@ -12,9 +12,12 @@
 package com.botts.impl.sensor.datafeed;
 
 
+import com.botts.api.parser.AbstractDataParser;
 import com.botts.api.parser.LineBasedStreamProcessor;
 import com.botts.api.parser.IDataParser;
 import com.botts.api.parser.IStreamProcessor;
+import com.botts.impl.parser.json.JSONDataParser;
+import com.botts.impl.parser.json.JSONDataParserConfig;
 import com.botts.impl.sensor.datafeed.config.MsgQueueCommConfig;
 import com.botts.impl.sensor.datafeed.config.StreamConfig;
 import net.opengis.swe.v20.DataBlock;
@@ -87,18 +90,11 @@ public class DataFeedDriver extends AbstractSensorModule<DataFeedConfig> {
         }
 
       // parser types
+        if(dataParser == null && config.dataParserConfig != null){
+            dataParser = getParentHub().getModuleRegistry().loadSubModule(this, config.dataParserConfig, true);
+        }else if(config.dataParserConfig == null){
+            throw new SensorHubException("Data Parser selected but no settings were specified");
 
-
-        try {
-            //TODO FIX THIS LIEK THE COMM PROVIDERS
-            Class<?> clazz = config.dataParserConfig.getDataParserClass();
-            Constructor<?> constructor = clazz.getConstructor(config.dataParserConfig.getClass(), DataComponent.class);
-            dataParser = (IDataParser) constructor.newInstance(config.dataParserConfig, output.getRecordDescription());
-        } catch (Exception e) {
-            streamProvider = null;
-            messageQueueProvider = null;
-            dataParser = null;
-            throw new SensorHubException("Unable to initialize data parser", e);
         }
 
         startProcessing();
