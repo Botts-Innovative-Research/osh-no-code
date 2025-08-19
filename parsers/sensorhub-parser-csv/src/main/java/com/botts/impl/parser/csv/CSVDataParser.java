@@ -26,7 +26,7 @@ public class CSVDataParser extends AbstractDataParser {
 
         String line = new String(data);
         if (!config.skipHeader) {
-            config.skipHeader = true;
+            hasSkippedHeader = true;
             return dataBlock;
         }
         String[] values = line.split(config.delimiter);
