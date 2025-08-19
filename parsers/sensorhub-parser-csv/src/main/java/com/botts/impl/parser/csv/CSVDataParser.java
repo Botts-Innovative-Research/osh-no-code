@@ -10,8 +10,6 @@ import org.sensorhub.api.common.SensorHubException;
 
 public class CSVDataParser extends AbstractDataParser {
 
-    // TODO Add to config
-    private boolean hasSkippedHeader = false;
     private final CSVDataParserConfig config;
 
     public CSVDataParser(CSVDataParserConfig config, DataComponent outputStructure) {
