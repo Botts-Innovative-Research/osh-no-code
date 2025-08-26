@@ -13,7 +13,7 @@ test {
 osgi {
   manifest {
     attributes ('Bundle-Vendor': 'Botts Innovative Research, Inc.')
-    attributes ('Bundle-Activator': 'com.botts.impl.utils.parser.Activator')
+    attributes ('Bundle-Activator': 'com.botts.api.parser.Activator')
   }
 }
 
