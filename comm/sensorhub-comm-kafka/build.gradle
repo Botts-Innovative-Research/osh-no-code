@@ -4,7 +4,7 @@ version = '1.0.0'
 
 dependencies {
   implementation 'org.sensorhub:sensorhub-core:' + oshCoreVersion
-  implementation 'org.apache.kafka:kafka-clients:4.0.0'
+  embeddedImpl 'org.apache.kafka:kafka-clients:4.0.0'
 }
 
 test {
