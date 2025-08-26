@@ -52,7 +52,9 @@ public class JSONDataParser extends AbstractDataParser implements IStreamProcess
 
     @Override
     public DataBlock parse(byte[] data) {
-        DataBlock dataBlock = getRecordStructure().createDataBlock();
+        DataComponent dataComponent = getRecordStructure();
+        dataComponent.renewDataBlock();
+        DataBlock dataBlock = dataComponent.createDataBlock();
         String jsonString = new String(data);
         JsonObject jsonObject;
         try {
