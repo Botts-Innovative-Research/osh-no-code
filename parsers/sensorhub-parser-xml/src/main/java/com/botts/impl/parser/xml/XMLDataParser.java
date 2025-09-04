@@ -12,9 +12,9 @@ public class XMLDataParser extends AbstractDataParser{
 
     DataComponent outputStructure;
 
-    public XMLDataParser(DataParserConfig config, DataComponent outputStructure) {
-        super(config, outputStructure);
-    }
+//    public XMLDataParser(DataParserConfig config, DataComponent outputStructure) {
+//        super(config, outputStructure);
+//    }
 
     @Override
     public DataBlock parse(byte[] data) {

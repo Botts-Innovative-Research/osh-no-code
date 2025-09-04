@@ -7,5 +7,7 @@ public interface IDataParser {
 
     DataComponent getRecordStructure();
 
+    void setRecordStructure(DataComponent recordStructure);
+
     DataBlock parse(byte[] data);
 }

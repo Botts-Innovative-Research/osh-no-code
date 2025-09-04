@@ -2,6 +2,7 @@ package com.botts.impl.parser.json;
 
 
 import com.botts.api.parser.AbstractDataParser;
+import com.botts.api.parser.DataParserConfig;
 import com.botts.api.parser.IStreamProcessor;
 import com.botts.api.parser.data.BaseDataType;
 import com.botts.api.parser.data.DataFeedUtils;
@@ -26,15 +27,24 @@ import java.util.function.Consumer;
 
 public class JSONDataParser extends AbstractDataParser implements IStreamProcessor {
 
-    private final ExecutorService executorService;
-    JSONDataParserConfig config;
+    private ExecutorService executorService;
+    private JSONDataParserConfig config;
 
-    public JSONDataParser(JSONDataParserConfig config, DataComponent outputStructure) {
-        super(config, outputStructure);
+//    public JSONDataParser(JSONDataParserConfig config, DataComponent outputStructure) {
+//        super(config, outputStructure);
+//
+//        this.config = config;
+//        this.executorService = Executors.newSingleThreadExecutor();
+//
+//    }
 
-        this.config = config;
+    @Override
+    public void init(DataParserConfig config) throws SensorHubException {
+        super.init(config);
+
+        Asserts.checkArgument(config instanceof JSONDataParserConfig);
+        this.config = (JSONDataParserConfig) config;
         this.executorService = Executors.newSingleThreadExecutor();
-
     }
 
     public static Object findInJsonObject(JsonObject root, String key, BaseDataType dataType) {
@@ -102,6 +112,7 @@ public class JSONDataParser extends AbstractDataParser implements IStreamProcess
                     e.printStackTrace();
                 }
             } else {
+                // TODO: Use common method from line based stream processor
                 try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
                     String line;
                     while ((line = reader.readLine()) != null) {

@@ -2,6 +2,7 @@ package com.botts.impl.parser.protobuf;
 
 
 import com.botts.api.parser.AbstractDataParser;
+import com.botts.api.parser.DataParserConfig;
 import com.botts.api.parser.IStreamProcessor;
 import com.botts.api.parser.data.BaseDataType;
 import com.botts.api.parser.data.DataFeedUtils;
@@ -31,28 +32,37 @@ import java.util.function.Consumer;
 public class ProtobufDataParser extends AbstractDataParser implements IStreamProcessor {
 
     private final Logger logger = LoggerFactory.getLogger(ProtobufDataParser.class);
-    private final ProtobufDataParserConfig config;
+    private ProtobufDataParserConfig config;
     private final Map<String, Descriptors.Descriptor> descriptorMap = new HashMap<>();
-    private final Descriptors.Descriptor defaultDescriptor;
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private Descriptors.Descriptor defaultDescriptor;
+    private ExecutorService executor;
     private final Object taskLock = new Object();
     private volatile Future<?> task;
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
 
-    public ProtobufDataParser(ProtobufDataParserConfig config, DataComponent outputStructure) {
-        super(config, outputStructure);
-        this.config = Asserts.checkNotNull(config, "config");
-        Asserts.checkNotNull(config.descFilePath);
+//    public ProtobufDataParser(ProtobufDataParserConfig config, DataComponent outputStructure) {
+//        super(config, outputStructure);
+//    }
+
+    @Override
+    public void init(DataParserConfig config) throws SensorHubException {
+        super.init(config);
+
+        this.executor = Executors.newSingleThreadExecutor();
+        Asserts.checkArgument(config instanceof ProtobufDataParserConfig);
+        this.config = (ProtobufDataParserConfig) config;
+
+        Asserts.checkNotNull(this.config.descFilePath);
 
         try {
-            loadDescriptors(config.descFilePath);
+            loadDescriptors(this.config.descFilePath);
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
         }
 
-        this.defaultDescriptor = descriptorMap.get(config.defaultMessageType);
+        this.defaultDescriptor = descriptorMap.get(this.config.defaultMessageType);
         if (this.defaultDescriptor == null)
-            throw new IllegalArgumentException("No default message type found. Config value: " + config.defaultMessageType);
+            throw new IllegalArgumentException("No default message type found. Config value: " + this.config.defaultMessageType);
     }
 
     public void loadDescriptors(String filepath) throws IOException, Descriptors.DescriptorValidationException {

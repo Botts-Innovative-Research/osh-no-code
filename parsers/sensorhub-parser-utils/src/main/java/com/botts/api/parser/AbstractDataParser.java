@@ -3,6 +3,7 @@ package com.botts.api.parser;
 
 import com.botts.api.parser.data.DataField;
 import net.opengis.swe.v20.DataComponent;
+import org.sensorhub.api.common.SensorHubException;
 import org.sensorhub.impl.module.AbstractSubModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,19 +14,17 @@ import java.util.stream.Collectors;
 
 public abstract class AbstractDataParser extends AbstractSubModule<DataParserConfig> implements IDataParser {
 
-    private static final Logger log = LoggerFactory.getLogger(AbstractDataParser.class);
-    private final DataComponent outputStructure;
-    private final List<DataField> inputFields;
-    private final Map<String, String> fieldMap;
+    private DataComponent outputStructure;
+    private List<DataField> inputFields;
+    private Map<String, String> fieldMap;
 
     public List<DataField> getInputFields() {
         return inputFields;
     }
 
-    public AbstractDataParser(DataParserConfig config, DataComponent outputStructure) {
-        Asserts.checkNotNull(config, "config");
-        Asserts.checkNotNull(config.outputStructure, "config.outputStructure");
-        this.outputStructure = Asserts.checkNotNull(outputStructure, "outputStructure");
+    @Override
+    public void init(DataParserConfig config) throws SensorHubException {
+        super.init(config);
 
         // Ensure we are at least sorting by index
         this.inputFields = Asserts.checkNotNull(config.inputFields, "inputFields").stream()
@@ -39,8 +38,19 @@ public abstract class AbstractDataParser extends AbstractSubModule<DataParserCon
                 ));
     }
 
+//    public AbstractDataParser() {
+//        Asserts.checkNotNull(config, "config");
+//        Asserts.checkNotNull(config.outputStructure, "config.outputStructure");
+//        this.outputStructure = Asserts.checkNotNull(outputStructure, "outputStructure");
+//    }
+
     @Override
     public DataComponent getRecordStructure() {
         return outputStructure;
+    }
+
+    @Override
+    public void setRecordStructure(DataComponent recordStructure) {
+        this.outputStructure = recordStructure;
     }
 }

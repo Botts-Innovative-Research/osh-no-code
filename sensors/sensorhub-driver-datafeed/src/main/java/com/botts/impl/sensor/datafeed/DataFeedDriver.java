@@ -85,11 +85,12 @@ public class DataFeedDriver extends AbstractSensorModule<DataFeedConfig> {
         }
 
 
-        if(dataParser == null && config.dataParserConfig != null){
+        if (dataParser == null && config.dataParserConfig != null) {
             dataParser = getParentHub().getModuleRegistry().loadSubModule(this, config.dataParserConfig, true);
-        }else if(config.dataParserConfig == null){
+        } else if(config.dataParserConfig == null){
             throw new SensorHubException("Data Parser selected but no settings were specified");
         }
+        dataParser.setRecordStructure(output.getRecordDescription());
 
         startProcessing();
     }
@@ -150,17 +151,13 @@ public class DataFeedDriver extends AbstractSensorModule<DataFeedConfig> {
     /**
      * Signals the processing thread to stop.
      */
-    public void stopProcessing() {
+    public void stopProcessing() throws SensorHubException {
         doProcessing.set(false);
-        try {
-            if (streamProvider != null && streamProvider.isStarted())
-                streamProvider.stop();
-            if (messageQueueProvider != null)
-                messageQueueProvider.stop();
+        if (streamProvider != null && streamProvider.isStarted())
+            streamProvider.stop();
+        if (messageQueueProvider != null)
+            messageQueueProvider.stop();
 //            if (dataStreamProcessor != null)
 //                dataStreamProcessor.stop();
-        } catch (SensorHubException e) {
-            reportError("Failed to stop processing", e);
-        }
     }
 }
