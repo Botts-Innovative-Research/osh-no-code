@@ -16,6 +16,8 @@ dependencies {
     embeddedImpl "com.google.protobuf:protobuf-java:4.31.1"
     embeddedImpl "com.google.protobuf:protobuf-java-util:4.31.1"
 
+    embeddedApi(project(':sensorhub-driver-datafeed'))
+
     testImplementation('junit:junit:4.13.1')
 }
 
@@ -27,7 +29,6 @@ osgi {
     manifest {
         attributes ('Bundle-Vendor': 'Botts Innovative Research, Inc.')
         attributes ('Bundle-Activator': 'com.botts.ui.Activator')
-        attributes ('DynamicImport-Package': 'com.botts.impl.sensor.datafeed.config')
     }
 }
 
