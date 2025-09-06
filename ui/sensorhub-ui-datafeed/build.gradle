@@ -1,6 +1,6 @@
 description = 'Data Feed'
 ext.details = "A driver for capturing various data feeds"
-version = '1.0.0'
+version = '1.0.1'
 
 dependencies {
     implementation 'org.sensorhub:sensorhub-core:' + oshCoreVersion
