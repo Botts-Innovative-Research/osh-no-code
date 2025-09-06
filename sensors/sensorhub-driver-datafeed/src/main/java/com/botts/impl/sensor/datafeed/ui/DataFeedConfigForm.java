@@ -1,9 +1,13 @@
-package com.botts.ui;
+package com.botts.impl.sensor.datafeed.ui;
 
+import com.botts.impl.sensor.datafeed.config.MsgQueueCommConfig;
+import com.botts.impl.sensor.datafeed.config.StreamConfig;
 import org.sensorhub.ui.GenericConfigForm;
-import org.sensorhub.ui.data.*;
+import org.sensorhub.ui.data.BaseProperty;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class DataFeedConfigForm extends GenericConfigForm {
 
@@ -18,17 +22,9 @@ public class DataFeedConfigForm extends GenericConfigForm {
     public Map<String, Class<?>> getPossibleTypes(String propId, BaseProperty<?> prop) {
         Map<String, Class<?>> classList = new LinkedHashMap<>();
 
-        if(propId.equals(PROP_COMM_TYPE)){
-            try
-            {
-                classList.put("Stream", Class.forName("com.botts.impl.sensor.datafeed.config.StreamConfig"));
-                classList.put("Message Queue", Class.forName("com.botts.impl.sensor.datafeed.config.MsgQueueCommConfig"));
-            }
-            catch (ClassNotFoundException e)
-            {
-                getOshLogger().error("Cannot find comm class", e);
-            }
-            return classList;
+        if (propId.equals(PROP_COMM_TYPE)) {
+            classList.put("Stream", StreamConfig.class);
+            classList.put("Message Queue", MsgQueueCommConfig.class);
         }
 
         if (!classList.isEmpty())

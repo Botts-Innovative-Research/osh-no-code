@@ -9,22 +9,22 @@ Update `AdminUI` in the `config.json` by adding the following under the `customF
 {
 "objClass": "org.sensorhub.ui.CustomUIConfig",
 "configClass": "com.botts.impl.sensor.datafeed.DataFeedConfig",
-"uiClass": "com.botts.ui.DataFeedConfigForm"
+"uiClass": "com.botts.impl.sensor.ui.DataFeedConfigForm"
 },
 {
 "objClass": "org.sensorhub.ui.CustomUIConfig",
 "configClass": "com.botts.api.parser.DataParserConfig",
-"uiClass": "com.botts.ui.DataParserConfigForm"
+"uiClass": "com.botts.impl.sensor.ui.DataParserConfigForm"
 },
 {
 "objClass": "org.sensorhub.ui.CustomUIConfig",
 "configClass": "com.botts.api.parser.data.DataField",
-"uiClass": "com.botts.ui.ProtobufParserConfigForm"
+"uiClass": "com.botts.impl.sensor.ui.ProtobufParserConfigForm"
 },
 {
 "objClass": "org.sensorhub.ui.CustomUIConfig",
 "configClass": "com.botts.impl.parser.protobuf.ProtobufDataParserConfig",
-"uiClass": "com.botts.ui.ProtobufParserConfigForm"
+"uiClass": "com.botts.impl.sensor.ui.ProtobufParserConfigForm"
 }
 ],
 ```

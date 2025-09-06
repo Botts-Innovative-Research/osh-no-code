@@ -1,4 +1,4 @@
-package com.botts.ui;
+package com.botts.impl.sensor.datafeed.ui;
 
 import com.botts.api.parser.DataParserConfig;
 import com.botts.api.parser.data.DataField;
