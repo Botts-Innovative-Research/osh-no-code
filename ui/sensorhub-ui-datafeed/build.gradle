@@ -27,6 +27,7 @@ osgi {
     manifest {
         attributes ('Bundle-Vendor': 'Botts Innovative Research, Inc.')
         attributes ('Bundle-Activator': 'com.botts.ui.Activator')
+        attributes ('DynamicImport-Package': 'com.botts.impl.sensor.datafeed.config')
     }
 }
 
