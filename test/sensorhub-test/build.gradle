@@ -2,6 +2,7 @@ apply plugin: 'java'
 description = 'Main Test Project'
 targetCompatibility = 21
 
+osgi.enabled = false;
 dependencies {
     implementation 'org.sensorhub:sensorhub-core:' + oshCoreVersion
     implementation 'org.sensorhub:sensorhub-datastore-h2:' + oshCoreVersion
