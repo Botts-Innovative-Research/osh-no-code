@@ -1,0 +1,143 @@
+tasks.register("cleanReadmes") {
+    group = 'readmes'
+    description = 'Deletes README.md files from all subprojects'
+    dependsOn detectConfigPackages
+
+    doLast {
+        subprojects.each { subproj ->
+            def configPkg = configPackageMap[subproj.name] ?: "unknown"
+            if (!configPkg.equalsIgnoreCase("unknown")) {
+
+                def packageDir = "${subproj.projectDir}/src/main/resources/${configPkg.replace('.', '/')}"
+
+                def readme = new File(packageDir, "README.md")
+
+                if (!readme.exists()) {
+
+                    println "📭 ${subproj.name}: No README.md found"
+
+                    return
+
+                } else {
+
+                    def numFiles = new File(packageDir).listFiles().length
+
+                    def deleted = readme.delete()
+
+                    if (deleted) {
+
+                        println "🗑️ ${subproj.name}: Deleted README.md (config package: ${subproj.name} @ ${packageDir})"
+
+                        if (numFiles <= 1) {
+
+                            new File("${subproj.projectDir}/src/main/resources/${configPkg.substring(0, configPkg.indexOf('.'))}").deleteDir()
+                        }
+
+                    } else {
+
+                        println "❌ ${subproj.name}: Failed to delete README.md"
+                    }
+                }
+            }
+        }
+    }
+}
+
+ext.configPackageMap = [:] // subproject.name → config class package
+
+tasks.register("detectConfigPackages") {
+    group = 'readmes'
+    description = 'Detects config class package for each subproject by analyzing getModuleConfigClass() in JarModuleProvider subclasses'
+    subprojects.each { subproj ->
+        def javaDir = new File(subproj.projectDir, "src/main/java")
+        if (!javaDir.exists()) {
+//            println "⏭️ ${subproj.name}: No src/main/java directory"
+            return
+        }
+
+        def providerFile = null
+        def configClassName = null
+
+        // Step 1: Find class that extends JarModuleProvider
+        fileTree(javaDir).matching { include '**/*.java' }.each { file ->
+            def lines = file.readLines()
+            lines.each { line ->
+                def match = line =~ /\bclass\s+(\w+)\s*(?:<[^>]+>)?\s+extends\s+JarModuleProvider\b/
+                if (match.find()) {
+                    providerFile = file
+                    return
+                }
+            }
+            if (providerFile) return
+        }
+
+        if (!providerFile) {
+//            println "⚠️ ${subproj.name}: No JarModuleProvider subclass found"
+            return
+        }
+
+        // Step 2: Extract config class from getModuleConfigClass()
+        def methodMatch = providerFile.text =~ /getModuleConfigClass\s*\(\s*\)\s*\{[^}]*?return\s+([a-zA-Z0-9_$.]+)\.class/
+        if (methodMatch.find()) {
+            configClassName = methodMatch[0][1]
+        } else {
+//            println "❌ ${subproj.name}: getModuleConfigClass() not found or malformed in ${providerFile.name}"
+            return
+        }
+
+        // Step 3: Find config class file
+        def configFile = fileTree(javaDir).matching {
+            include "**/${configClassName.replace('.', '/')}.java"
+        }.find()
+
+        if (!configFile) {
+//            println "❌ ${subproj.name}: Config class ${configClassName} not found"
+            return
+        }
+
+        // Step 4: Extract package from config class
+        def pkgLine = configFile.readLines().find { it.trim().startsWith("package ") }
+        def pkgMatch = pkgLine =~ /package\s+([a-zA-Z0-9_.]+);/
+        if (pkgMatch) {
+            def configPackage = pkgMatch[0][1]
+            configPackageMap[subproj.name] = configPackage
+//            println "📦 ${subproj.name}: Config class → ${configClassName}, Package → ${configPackage}"
+//        } else {
+//            println "⚠️ ${subproj.name}: Package declaration not found in ${configClassName}"
+        }
+    }
+}
+
+tasks.register("copyReadmes", Copy) {
+    group = 'readmes'
+    description = 'Copies README.md from subproject root to config package resources directory'
+    dependsOn(detectConfigPackages)
+    subprojects.each { subproj ->
+        def configPackage = configPackageMap[subproj.name]
+        if (!configPackage) {
+//            println "⏭️ ${subproj.name}: No config package detected"
+            return
+        }
+
+        def readmeFile = new File(subproj.projectDir, "README.md")
+        if (!readmeFile.exists()) {
+            println "⚠️ ${subproj.name}: README.md not found"
+            return
+        }
+
+        def resourceDir = new File(subproj.projectDir, "src/main/resources/${configPackage.replace('.', '/')}")
+        if (!resourceDir.exists()) {
+            resourceDir.mkdirs()
+//            println "📁 ${subproj.name}: Created resource directory ${resourceDir}"
+        }
+
+        def destFile = new File(resourceDir, "README.md")
+        readmeFile.withInputStream { input ->
+            destFile.withOutputStream { output ->
+                output << input
+            }
+        }
+
+        println "✅ ${subproj.name}: Copied README.md to ${destFile}"
+    }
+}
