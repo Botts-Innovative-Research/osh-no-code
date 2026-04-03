@@ -333,6 +333,12 @@ subprojects {
                 publications {
                     mavenJava(MavenPublication) {
                         from components.java
+
+                        // Publish the OSGi bundle JAR as an additional artifact
+                        artifact(p.tasks.osgi) {
+                            classifier = 'bundle'
+                        }
+                        
                         pom.withXml {
                             asNode().get('version') + ({
                                 resolveStrategy = Closure.DELEGATE_FIRST
