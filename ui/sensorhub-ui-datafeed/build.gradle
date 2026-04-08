@@ -5,9 +5,10 @@ version = '1.0.0'
 dependencies {
     implementation 'org.sensorhub:sensorhub-core:' + oshCoreVersion
     implementation 'org.sensorhub:sensorhub-webui-core:' + oshCoreVersion
-    embeddedImpl 'com.vaadin:vaadin-server:8.14.3'
-    embeddedImpl 'com.vaadin:vaadin-compatibility-server:8.14.3'
-    embeddedImpl 'com.vaadin:vaadin-themes:8.14.3'
+
+    compileOnly 'com.vaadin:vaadin-server:8.14.3'
+    compileOnly 'com.vaadin:vaadin-compatibility-server:8.14.3'
+    compileOnly 'com.vaadin:vaadin-themes:8.14.3'
 
     implementation project(':sensorhub-parser-utils')
 
@@ -25,8 +26,16 @@ test {
 
 osgi {
     manifest {
-        attributes ('Bundle-Vendor': 'Botts Innovative Research, Inc.')
-        attributes ('Bundle-Activator': 'com.botts.ui.Activator')
+        attributes('Bundle-Vendor': 'Botts Innovative Research, Inc.')
+        attributes('Bundle-SymbolicName': 'com.botts.ui.datafeed')
+        attributes('Bundle-Version': version)
+
+        // THIS is the important part:
+        attributes('Fragment-Host': 'org.sensorhub.sensorhub-webui-core')
+
+        attributes('-dsannotations': 'false')
+        attributes('Export-Package': '')
+        attributes('Import-Package': '*;resolution:=optional')
     }
 }
 
@@ -36,13 +45,13 @@ ext.pom >>= {
             id 'earocorn'
             name 'Alex Almanza'
             organization 'Botts Innovative Research, Inc.'
-             organizationUrl 'https://www.botts-inc.com'
+            organizationUrl 'https://www.botts-inc.com'
         }
         developer {
             id 'kalynstricklin'
             name 'Kalyn Stricklin'
             organization 'Botts Innovative Research, Inc.'
-             organizationUrl 'https://www.botts-inc.com'
+            organizationUrl 'https://www.botts-inc.com'
         }
     }
 }
