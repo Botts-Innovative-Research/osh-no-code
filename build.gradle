@@ -5,6 +5,10 @@ plugins {
     id "biz.aQute.bnd" version "6.1.0" apply false
 }
 
+allprojects {
+    group = 'com.botts'
+}
+
 apply from: 'readmes.gradle'
 
 ext.oshCoreVersion = '2.0-beta2'
@@ -88,6 +92,14 @@ subprojects {
 
     version = oshCoreVersion
     ext.pom = {} // pom data that subprojects can append to
+
+    jar {
+        into('lib') {
+            from {
+                project.configurations.embedded
+            }
+        }
+    }
 
     // inject all repositories from included builds if any
     repositories.addAll(rootProject.repositories)
