@@ -1,0 +1,34 @@
+rootProject.name = 'no-code-addons'
+
+List<String> includeModules = new ArrayList([
+        "sensorhub-comm-kafka",
+        "sensorhub-parser-csv",
+        "sensorhub-parser-json",
+        "sensorhub-parser-protobuf",
+        "sensorhub-parser-utils",
+        "sensorhub-parser-xml",
+        "sensorhub-driver-datafeed",
+        "sensorhub-ui-datafeed"
+]).sort();
+
+FileTree subprojects =  fileTree(".").include('**/build.gradle') as FileTree
+subprojects.files.each { File projectFile ->
+    File projectFolder = projectFile.parentFile
+    if (includeModules.contains(projectFolder.name)) {
+        String projectName = ':' + projectFolder.name
+        include projectName
+        project(projectName).projectDir = projectFolder
+    }
+}
+
+// ******************************** Uncomment if wanting to run debug **************************************************
+
+subprojects = fileTree("$rootDir/test").include( '**/build.gradle') as FileTree
+subprojects.files.each { File f ->
+    File projectFolder = f.parentFile
+    if (projectFolder != rootDir) {
+        String projectName = ':' + projectFolder.name
+        include projectName
+        project(projectName).projectDir = projectFolder
+    }
+}

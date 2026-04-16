@@ -1,2 +1,16 @@
+**/bin/
+**/target/
 **/build/
+**/.gradle/
+**/.DStore
+**/.DS_Store
+**/.settings
+**/.project
+**/.classpath
+**/.idea
+**/.vimrc
+**/*.iml
 **/resources/**/README.md
+**/.moduledata/
+**/*.db
+/storage/
