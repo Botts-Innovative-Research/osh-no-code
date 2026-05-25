@@ -350,38 +350,37 @@ subprojects {
                         artifact(p.tasks.osgi) {
                             classifier = 'bundle'
                         }
-                        
+
                         pom.withXml {
                             asNode().get('version') + ({
                                 resolveStrategy = Closure.DELEGATE_FIRST
                                 name p.description
                                 if (p.details != null)
                                     description p.details
-                                url 'http://www.opensensorhub.org'
+                                url 'https://georobotix.us'
                                 licenses {
                                     license {
-                                        name 'Mozilla Public License Version 2.0'
-                                        url 'http://www.mozilla.org/MPL/2.0'
+                                        name 'Proprietary – All rights reserved'
+                                        url 'https://georobotix.us//legal'
                                         distribution 'repo'
                                     }
                                 }
                                 scm {
-                                    url 'https://github.com/opensensorhub/osh-addons'
-                                    connection 'scm:git:git://github.com/opensensorhub/osh-addons.git'
+                                    url 'https://github.com/Botts-Innovative-Research/no-code-addons'
+                                    connection 'scm:git:git://github.com/Botts-Innovative-Research/socom-addons.git'
                                 }
                                 issueManagement {
-                                    url 'https://github.com/opensensorhub/osh-addons/issues'
+                                    url 'https://github.com/Botts-Innovative-Research/no-code-addons/issues'
                                     system 'GitHub Issues'
                                 }
                             } >> p.pom)
-                        }
-                    }
+                        }                    }
                 }
                 repositories {
                     //mavenLocal()
                     maven {
                         name = "GitHubPackages"
-                        url = "https://maven.pkg.github.com/opensensorhub/osh-addons"
+                        url = "https://maven.pkg.github.com/Botts-Innovative-Research/no-code-addons"
                         credentials {
                             username = System.getenv("GITHUB_ACTOR")
                             password = System.getenv("GITHUB_TOKEN")
