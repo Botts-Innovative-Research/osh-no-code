@@ -11,7 +11,7 @@ allprojects {
 
 apply from: 'readmes.gradle'
 
-ext.oshCoreVersion = '2.0-beta2'
+ext.oshCoreVersion = '2.0.0-beta.3'
 description = 'No-Code Add-ons'
 
 tasks.register("harvestBundles", Copy) {
@@ -367,7 +367,7 @@ subprojects {
                                 }
                                 scm {
                                     url 'https://github.com/Botts-Innovative-Research/no-code-addons'
-                                    connection 'scm:git:git://github.com/Botts-Innovative-Research/socom-addons.git'
+                                    connection 'scm:git:git://github.com/Botts-Innovative-Research/no-code.git'
                                 }
                                 issueManagement {
                                     url 'https://github.com/Botts-Innovative-Research/no-code-addons/issues'
