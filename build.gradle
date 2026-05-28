@@ -80,22 +80,6 @@ subprojects {
     repositories {
         mavenCentral()
 
-//        maven {
-//            name = 'osh-core'
-//            url = uri("https://maven.pkg.github.com/opensensorhub/osh-core")
-//            credentials {
-//                username = System.getenv("GITHUB_ACTOR")
-//                password = System.getenv("GITHUB_TOKEN")
-//            }
-//        }
-//        maven {
-//            name = 'osh-addons'
-//            url = uri("https://maven.pkg.github.com/opensensorhub/osh-addons")
-//            credentials {
-//                username = System.getenv("GITHUB_ACTOR")
-//                password = System.getenv("GITHUB_TOKEN")
-//            }
-//        }
         maven {
             name = 'nexus'
             url = System.getenv("NEXUS_REPO_PUBLIC")
@@ -216,6 +200,47 @@ subprojects {
                     }
                 }
                 attributes 'Bundle-ClassPath': embeddedClasspath + '.'
+            }
+        }
+    }
+
+    /* -----------------------------------------------------------
+        BUILD MANIFESTS
+    ----------------------------------------------------------- */
+
+    afterEvaluate { p ->
+
+        rootProject.dependencies {
+            def dep = p.version.endsWith('SNAPSHOT') ? dev(p) : stable(p)
+            dep.exclude group: 'org.sensorhub'
+            dep.exclude group: 'org.vast.opengis'
+        }
+
+        if (p.name != "sensorhub-test") {
+
+            p.osgi {
+                manifest {
+                    // main info
+                    attributes 'Bundle-SymbolicName': p.group + '.' + p.name
+                    if (p.description != null && !attributes['Bundle-Name'])
+                        attributes 'Bundle-Name': p.description
+                    if (p.details != null && !attributes['Bundle-Description'])
+                        attributes 'Bundle-Description': p.details
+                    attributes 'Bundle-Version': p.version
+                    if (p.hasProperty('buildNumber') && p.buildNumber != null && !p.buildNumber.isEmpty())
+                        attributes 'Bundle-BuildNumber': p.buildNumber
+                    if (!attributes['Bundle-License'])
+                        attributes 'Bundle-License': 'Proprietary – All rights reserved. No redistribution or modification permitted.'
+                    if (!attributes['Bundle-Copyright'] && attributes['Bundle-Vendor'])
+                        attributes 'Bundle-Copyright': 'Copyright (c) ' + attributes['Bundle-Vendor'] + '. All Rights Reserved'
+                }
+            }
+
+            // also use osgi headers in JAR manifest
+            p.jar {
+                manifest {
+                    from p.osgi.manifest
+                }
             }
         }
     }
