@@ -6,11 +6,6 @@ if (project.hasProperty("snapshot") && project.property("snapshot") == "true") {
     version = "${version}-SNAPSHOT"
 }
 
-// Disable tests
-tasks.withType(Test).configureEach {
-    enabled = false
-}
-
 dependencies {
     implementation 'org.sensorhub:sensorhub-core:' + oshCoreVersion
 
@@ -22,6 +17,11 @@ dependencies {
 
 test {
   useJUnit()
+}
+
+// Disable tests
+tasks.withType(Test).configureEach {
+    enabled = false
 }
 
 osgi {
