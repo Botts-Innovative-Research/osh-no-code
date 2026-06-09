@@ -18,6 +18,7 @@ dependencies {
     embeddedImpl "com.google.protobuf:protobuf-java-util:4.31.1"
     implementation project(':sensorhub-parser-utils')
     implementation project(':sensorhub-parser-json')
+    testImplementation('junit:junit:4.13.1')
 }
 
 test {
