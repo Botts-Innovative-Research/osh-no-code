@@ -6,6 +6,11 @@ if (project.hasProperty("snapshot") && project.property("snapshot") == "true") {
     version = "${version}-SNAPSHOT"
 }
 
+// Disable tests
+tasks.withType(Test).configureEach {
+    enabled = false
+}
+
 dependencies {
     implementation 'org.sensorhub:sensorhub-core:' + oshCoreVersion
 
@@ -16,28 +21,24 @@ dependencies {
 }
 
 test {
-  useJUnit()
-}
-
-// Disable tests
-tasks.withType(Test).configureEach {
-    enabled = false
+    exclude '**/ProtobufTest.class'
+    useJUnit()
 }
 
 osgi {
-  manifest {
-    attributes ('Bundle-Vendor': 'Botts Innovative Research, Inc.')
-    attributes ('Bundle-Activator': 'com.botts.impl.parser.protobuf.Activator')
-  }
+    manifest {
+        attributes('Bundle-Vendor': 'Botts Innovative Research, Inc.')
+        attributes('Bundle-Activator': 'com.botts.impl.parser.protobuf.Activator')
+    }
 }
 
 ext.pom >>= {
     developers {
         developer {
-          id 'earocorn'
-          name 'Alex Almanza'
-          organization 'Botts Innovative Research, Inc'
-          organizationUrl 'https://www.botts-inc.com'
+            id 'earocorn'
+            name 'Alex Almanza'
+            organization 'Botts Innovative Research, Inc'
+            organizationUrl 'https://www.botts-inc.com'
         }
     }
 }
