@@ -1,6 +1,10 @@
 description = 'CSV Parser'
 ext.details = ''
-version = '1.0.0'
+
+version = '1.0.1'
+if (project.hasProperty("snapshot") && project.property("snapshot") == "true") {
+    version = "${version}-SNAPSHOT"
+}
 
 dependencies {
     implementation 'org.sensorhub:sensorhub-core:' + oshCoreVersion

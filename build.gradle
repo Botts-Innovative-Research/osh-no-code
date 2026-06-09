@@ -72,7 +72,21 @@ subprojects {
     apply plugin: 'maven-publish'
 
     version = rootProject.oshCoreVersion
+    if (project.hasProperty("snapshot")) {
+        version = "${version}-SNAPSHOT"
+    }
     ext.pom = {} // pom data that subprojects can append to
+
+    // -----------------------------------------------------------
+    // Prevent test fixtures from being published to Maven
+    // -----------------------------------------------------------
+    components.java.withVariantsFromConfiguration(
+            configurations.testFixturesApiElements
+    ) { skip() }
+
+    components.java.withVariantsFromConfiguration(
+            configurations.testFixturesRuntimeElements
+    ) { skip() }
 
     sourceCompatibility = 17
     targetCompatibility = 17
@@ -82,8 +96,7 @@ subprojects {
 
         maven {
             name = 'nexus'
-            url = System.getenv("NEXUS_REPO_PUBLIC")
-            allowInsecureProtocol = true
+            url = uri(System.getenv("NEXUS_REPO_URL"))
             credentials {
                 username = System.getenv("NEXUS_ACTOR")
                 password = System.getenv("NEXUS_TOKEN")
@@ -93,6 +106,12 @@ subprojects {
 
     dependencies {
         testImplementation "junit:junit:4.13.1"
+    }
+
+    tasks.register("printVersion") {
+        doLast {
+            println("${project.name} version = ${project.version}")
+        }
     }
 
     /* -----------------------------------------------------------
@@ -207,7 +226,6 @@ subprojects {
     /* -----------------------------------------------------------
         BUILD MANIFESTS
     ----------------------------------------------------------- */
-
     afterEvaluate { p ->
 
         rootProject.dependencies {
@@ -285,14 +303,12 @@ subprojects {
             maven {
                 name = "Nexus"
 
-                if (version.toString().endsWith("SNAPSHOT")) {
+                if (project.version.toString().endsWith("SNAPSHOT")) {
                     url = System.getenv("NEXUS_REPO_SNAPSHOT")
-                }
-                else {
+                } else {
                     url = System.getenv("NEXUS_REPO_RELEASE")
                 }
 
-                allowInsecureProtocol = true
                 credentials {
                     username = System.getenv("NEXUS_ACTOR")
                     password = System.getenv("NEXUS_TOKEN")
