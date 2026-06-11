@@ -23,6 +23,7 @@ jobs:
       NEXUS_REPO_URL: ${{ vars.NEXUS_REPO_URL }}
       NEXUS_REPO_SNAPSHOT: ${{ vars.NEXUS_REPO_SNAPSHOT }}
       NEXUS_REPO_RELEASE: ${{ vars.NEXUS_REPO_RELEASE }}
+      OSH_CORE_VERSION: ${{ vars.OSH_CORE_VERSION }}
 
       # Snapshot flag: develop = snapshot, everything else = release
       SNAPSHOT: ${{ github.ref == 'refs/heads/develop' }}
@@ -130,3 +131,54 @@ jobs:
         if: env.SNAPSHOT == 'true' || env.RELEASE == 'true'
         run: ./gradlew publish -Psnapshot=$SNAPSHOT --no-daemon
 
+      # ---------------------------------------------------------
+      # Tag published artifacts with OSH core version
+      # ---------------------------------------------------------
+      - name: Tag Nexus Artifacts
+        if: env.SNAPSHOT == 'true' || env.RELEASE == 'true'
+        run: |
+          echo "Tagging Nexus artifacts for ${GITHUB_REPOSITORY} version ${GITHUB_REF_NAME}"
+
+          # Determine repo name
+          if [ "${SNAPSHOT}" = "true" ]; then
+            REPO_NAME="${{ vars.NEXUS_REPO_SNAPSHOT_NAME }}"
+          else
+            REPO_NAME="${{ vars.NEXUS_REPO_RELEASE_NAME }}"
+          fi
+
+          GROUP_ID=$(./gradlew properties | grep "^group:" | awk '{print $2}')
+          ARTIFACT_ID=$(./gradlew properties | grep "^name:" | awk '{print $2}')
+          VERSION=$(./gradlew properties | grep "^version:" | awk '{print $2}')
+
+          echo "Group: $GROUP_ID"
+          echo "Artifact: $ARTIFACT_ID"
+          echo "Version: $VERSION"
+          echo "Repo: $REPO_NAME"
+
+          SEARCH_URL="${NEXUS_REPO_URL}/service/rest/v1/search?repository=${REPO_NAME}&group=${GROUP_ID}&name=${ARTIFACT_ID}&version=${VERSION}"
+
+          echo "Searching Nexus: $SEARCH_URL"
+
+          ITEMS=$(curl -s -u "${NEXUS_ACTOR}:${NEXUS_TOKEN}" "$SEARCH_URL" | jq -c '.items[]')
+
+          if [ -z "$ITEMS" ]; then
+            echo "No components found in Nexus to tag"
+            exit 0
+          fi
+
+          for ITEM in $ITEMS; do
+            COMPONENT_ID=$(echo "$ITEM" | jq -r '.id')
+            ATTR_URL="${NEXUS_REPO_URL}/service/rest/v1/components/${COMPONENT_ID}/attributes"
+
+            echo "Tagging component: $COMPONENT_ID"
+
+            PAYLOAD=$(jq -n --arg core "$OSH_CORE_VERSION" '{osh: {coreVersion: $core}}')
+
+            curl -s -X PUT \
+              -u "${NEXUS_ACTOR}:${NEXUS_TOKEN}" \
+              -H "Content-Type: application/json" \
+              -d "$PAYLOAD" \
+              "$ATTR_URL"
+
+            echo "Tagged $COMPONENT_ID with coreVersion=$OSH_CORE_VERSION"
+          done
