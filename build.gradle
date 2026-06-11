@@ -12,7 +12,7 @@ allprojects {
 apply from: 'readmes.gradle'
 
 ext {
-    oshCoreVersion = '2.0.0-beta.3'
+    oshCoreVersion = '2.0.1'
 }
 
 description = 'NoCode Add-ons'
