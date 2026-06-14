@@ -11,6 +11,9 @@ allprojects {
 
 apply from: 'readmes.gradle'
 
+if (!System.getenv("OSH_CORE_VERSION"))
+    throw new Exception("OSH_CORE_VERSION not set")
+
 ext {
     oshCoreVersion = System.getenv("OSH_CORE_VERSION")
 }
@@ -71,8 +74,7 @@ subprojects {
     apply plugin: 'eclipse'
     apply plugin: 'maven-publish'
 
-    version = rootProject.oshCoreVersion
-    if (project.hasProperty("snapshot")) {
+    if (project.findProperty("snapshot") == "true") {
         version = "${version}-SNAPSHOT"
     }
     ext.pom = {} // pom data that subprojects can append to
@@ -219,6 +221,7 @@ subprojects {
                     }
                 }
                 attributes 'Bundle-ClassPath': embeddedClasspath + '.'
+                attributes 'OSH-Core-Version': oshCoreVersion
             }
         }
     }
@@ -258,6 +261,7 @@ subprojects {
             p.jar {
                 manifest {
                     from p.osgi.manifest
+                    attributes 'OSH-Core-Version': oshCoreVersion
                 }
             }
         }
@@ -295,6 +299,7 @@ subprojects {
                         url = 'https://github.com/Botts-Innovative-Research/osh-no-code/issues'
                         system = 'GitHub Issues'
                     }
+                    properties.put("coreVersion", oshCoreVersion)
                 }
             }
         }
