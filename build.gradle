@@ -11,8 +11,18 @@ allprojects {
 
 apply from: 'readmes.gradle'
 
-ext.oshCoreVersion = '2.0-beta2'
-description = 'No-Code Add-ons'
+if (!System.getenv("OSH_CORE_VERSION"))
+    throw new Exception("OSH_CORE_VERSION not set")
+
+ext {
+    oshCoreVersion = System.getenv("OSH_CORE_VERSION")
+}
+
+description = 'NoCode Add-ons'
+
+/* -----------------------------------------------------------
+   BUNDLE HARVESTING + INDEX
+----------------------------------------------------------- */
 
 tasks.register("harvestBundles", Copy) {
     group = 'bundles'
@@ -22,9 +32,7 @@ tasks.register("harvestBundles", Copy) {
     subprojects.each { subproj ->
         if (!subproj.name.contains("v4l")) {
             def osgiOutputs = subproj.osgi?.outputs
-            if (osgiOutputs) {
-                from osgiOutputs
-            }
+            if (osgiOutputs) from osgiOutputs
         }
     }
 }
@@ -44,116 +52,118 @@ tasks.register("bundlesDistZip", Zip) {
     group = 'bundles'
     dependsOn genOSGiIndex
     destinationDirectory = file(layout.buildDirectory.dir("osgi"))
-    from layout.buildDirectory.dir("osgi/bundles").get().asFile
+    from layout.buildDirectory.dir("osgi/bundles")
     archiveFileName = "${rootProject.name}-osgi-bundles.zip"
-    include '*'
 }
 
-tasks.register("cleanBundles", Task) {
+tasks.register("cleanBundles") {
     group = 'bundles'
-    if (file(layout.buildDirectory.dir("osgi")).exists()) {
-
-        file(layout.buildDirectory.dir("osgi")).deleteDir()
+    doLast {
+        delete layout.buildDirectory.dir("osgi")
     }
 }
 
+/* -----------------------------------------------------------
+   SUBPROJECT CONFIG
+----------------------------------------------------------- */
+
 subprojects {
+
     apply plugin: 'java-library'
     apply plugin: 'java-test-fixtures'
     apply plugin: 'eclipse'
     apply plugin: 'maven-publish'
-    dependencies {
-        testImplementation "junit:junit:4.13.1"
+
+    if (project.findProperty("snapshot") == "true") {
+        version = "${version}-SNAPSHOT"
     }
+    ext.pom = {} // pom data that subprojects can append to
+
+    // -----------------------------------------------------------
+    // Prevent test fixtures from being published to Maven
+    // -----------------------------------------------------------
+    components.java.withVariantsFromConfiguration(
+            configurations.testFixturesApiElements
+    ) { skip() }
+
+    components.java.withVariantsFromConfiguration(
+            configurations.testFixturesRuntimeElements
+    ) { skip() }
 
     sourceCompatibility = 17
     targetCompatibility = 17
 
     repositories {
-        //mavenLocal()
         mavenCentral()
+
         maven {
-            name = 'osh-core'
-            url = uri("https://maven.pkg.github.com/opensensorhub/osh-core")
+            name = 'nexus'
+            url = uri(System.getenv("NEXUS_REPO_URL"))
             credentials {
-                username = System.getenv("GITHUB_ACTOR")
-                password = System.getenv("GITHUB_TOKEN")
-            }
-        }
-        maven {
-            name = 'osh-addons'
-            url = uri("https://maven.pkg.github.com/opensensorhub/osh-addons")
-            credentials {
-                username = System.getenv("GITHUB_ACTOR")
-                password = System.getenv("GITHUB_TOKEN")
+                username = System.getenv("NEXUS_ACTOR")
+                password = System.getenv("NEXUS_TOKEN")
             }
         }
     }
 
-    version = oshCoreVersion
-    ext.pom = {} // pom data that subprojects can append to
+    dependencies {
+        testImplementation "junit:junit:4.13.1"
+    }
 
-    jar {
-        into('lib') {
-            from {
-                project.configurations.embedded
-            }
+    tasks.register("printVersion") {
+        doLast {
+            println("${project.name} version = ${project.version}")
         }
     }
 
-    // inject all repositories from included builds if any
-    repositories.addAll(rootProject.repositories)
+    /* -----------------------------------------------------------
+       EMBEDDED CONFIG MODEL
+    ----------------------------------------------------------- */
+    configurations {
+        embeddedApi
+        embeddedImpl
+        embedded.extendsFrom(embeddedApi, embeddedImpl)
+        api.extendsFrom(embeddedApi)
+        implementation.extendsFrom(embeddedImpl)
+    }
+
+    /* -----------------------------------------------------------
+       OSGI BUNDLE TASK
+    ----------------------------------------------------------- */
     task osgi(type: aQute.bnd.gradle.Bundle) {
-        from project.sourceSets.main.output
+        from sourceSets.main.output
         archiveClassifier = 'bundle'
+
         bundle {
             classpath = sourceSets.main.compileClasspath
         }
 
-        // copy embedded libs into bundle jar
         into('lib') {
-            from {
-                project.configurations.embedded
-            }
+            from configurations.embedded
         }
 
-        // helper method to list all non-empty packages in jar
+        // helper methods preserved exactly
         ext.getPackagesFromJar = { jarFile, packageSet ->
-            //println jarFile
             FileSystems.newFileSystem(jarFile.toPath(), ClassLoader.getSystemClassLoader()).withCloseable { fs ->
                 def rootDir = fs.getPath('/')
                 getPackagesFromDir(rootDir, packageSet)
             }
         }
 
-        // helper method to list all non-empty packages in class folder
         ext.getPackagesFromDir = { rootDir, packageSet ->
             rootDir.eachDirRecurse { dir ->
-                //println dir
-                // skip some directories
-                if (dir.toString().startsWith(File.separator + 'META-INF')) {
-                    return;
-                }
+                if (dir.toString().startsWith(File.separator + 'META-INF')) return
 
-                // keep only packages that have java class files in them
                 Files.list(dir)
                         .filter { it.toString().endsWith('.class') }
                         .findAny()
                         .ifPresent {
-                            // Using File.separator in the replace calls on windows does not seem to work and messes up the creation
-                            // of the manifest files
-                            if (rootDir.relativize(dir).toString().contains('\\')) {
-                                packageSet.add(rootDir.relativize(dir).toString()
-                                        .replace('\\', '.') + '.*')
-                            } else {
-                                packageSet.add(rootDir.relativize(dir).toString()
-                                        .replace('/', '.') + '.*')
-                            }
+                            def rel = rootDir.relativize(dir).toString()
+                            packageSet.add(rel.replace('\\', '.').replace('/', '.') + '.*')
                         }
             }
         }
 
-        // help method to automatically find osgi activator class
         ext.findActivator = {
             for (def classDir : sourceSets.main.output.classesDirs) {
                 def rootDir = classDir.toPath()
@@ -161,150 +171,64 @@ subprojects {
                         .filter { it.toString().endsWith('Activator.class') }
                         .map {
                             rootDir.relativize(it).toString()
-                                    .replace(java.io.File.separatorChar, (char) '.')
+                                    .replace(File.separatorChar, (char) '.')
                                     .replaceAll('.class$', '')
                         }
                         .findAny()
                         .orElse(null)
-                if (activatorClass)
-                    return activatorClass
+                if (activatorClass) return activatorClass
             }
         }
 
         doFirst {
-            // configure bnd options before running the task
             manifest {
-                //if (!attributes['Import-Package'])
-                //  attributes 'Import-Package': '!java.*,!com.sun.*,!sun.*,!javax.xml.*,!org.xml.sax.*,!org.w3c.dom.*,*'
-                //attributes '-noimportjava': true
-                //attributes '-sources': true
-
-                // ignore some common errors
                 attributes '-fixupmessages': 'Classes found in the wrong directory; is:=ignore,' +
                         'Unused Import-Package instructions; is:=ignore,' +
-                        'The default package \'.\' is not permitted by the Import-Package syntax; is:=ignore,' +
+                        'The default package \'.\' is not permitted; is:=ignore,' +
                         'Unused Export-Package instructions; is:=ignore,'
 
-                // disable DS annotation processing
                 if (!attributes['-dsannotations'])
                     attributes '-dsannotations': '!*'
 
-                // auto detect bundle activator if not configured
                 if (!attributes['Bundle-Activator']) {
                     def activatorClass = findActivator()
-                    //println activatorClass
                     if (activatorClass)
                         attributes 'Bundle-Activator': activatorClass
                 }
 
-                // compute imports/exports based on gradle dependencies
-                def embeddedJars = project.configurations.embedded
-                def depJars = project.configurations.compileClasspath.minus(embeddedJars)
-                def apiJars = project.configurations.embeddedApi
+                def embeddedJars = configurations.embedded
+                def depJars = configurations.compileClasspath.minus(embeddedJars)
+                def apiJars = configurations.embeddedApi
 
-                // import all packages from all dependencies that are not embedded
                 def importedPackages = [] as Set
-                depJars.each {
-                    getPackagesFromJar(it, importedPackages)
-                }
-                //println importedPackages
+                depJars.each { getPackagesFromJar(it, importedPackages) }
                 if (!attributes['Import-Package'])
                     attributes 'Import-Package': importedPackages.join(',')
 
-                // export packages in API dependencies and in this project
                 def exportedPackages = [] as Set
                 sourceSets.main.output.classesDirs.each {
                     getPackagesFromDir(it.toPath(), exportedPackages)
                 }
-                apiJars.each {
-                    getPackagesFromJar(it, exportedPackages)
-                }
-                //println exportedPackages
+                apiJars.each { getPackagesFromJar(it, exportedPackages) }
                 if (!attributes['-exportcontents'])
                     attributes '-exportcontents': exportedPackages.join(',')
 
-                /*// add all dependencies that are not embedded to Require-Bundle
-                attributes 'Import-Package': '!*'
-                def embeddedDeps = project.configurations.embedded.allDependencies
-                def apiDeps = project.configurations.api.allDependencies.minus(embeddedDeps)
-                def implDeps = project.configurations.implementation.allDependencies.minus(apiDeps).minus(embeddedDeps)
-                def requiredBundles = ''
-                apiDeps.each {
-                  if (!requiredBundles.isEmpty()) requiredBundles += ','
-                  requiredBundles += it.group + '.' + it.name + ';bundle-version:="' + it.version + '";visibility:=reexport'
-                }
-                implDeps.each {
-                  if (!requiredBundles.isEmpty()) requiredBundles += ','
-                  requiredBundles += it.group + '.' + it.name + ';bundle-version:="' + it.version + '"'
-                }
-                attributes 'Require-Bundle': requiredBundles*/
-
-                /*// add embedded jars to OSGi classpath
-                // only add jars that were not substituted with newer version by gradle
-                def classpath = '.'
-                def embeddedJars = ''
-                def runtimeDeps = project.configurations.runtimeClasspath.collect { it.name };
-                project.configurations.embedded.each {
-                  if (runtimeDeps.contains(it.name)) {
-                    embeddedJars += 'lib/' + it.name + '=' + it.name + ';lib:=true,'
-                  }
-                }
-                attributes '-includeresource': embeddedJars*/
-
-                // add embedded jars to OSGi classpath
-                // we do it like this so imports are not computed for these
-                def classpath = '.'
+                def runtimeDeps = configurations.runtimeClasspath.collect { it.name }
                 def embeddedClasspath = ''
-                def runtimeDeps = project.configurations.runtimeClasspath.collect { it.name }
-                project.configurations.embedded.each {
+                configurations.embedded.each {
                     if (runtimeDeps.contains(it.name)) {
-                        embeddedClasspath += 'lib/' + it.name + ','
+                        embeddedClasspath += "lib/${it.name},"
                     }
                 }
                 attributes 'Bundle-ClassPath': embeddedClasspath + '.'
-
-                // auto-generate Bundle-NativeCode header if native libs are placed in
-                // the lib/native resource folder with the proper directory structure
-                def resourcesFolder = new File(projectDir, '/src/main/resources')
-                def nativeFolder = new File(resourcesFolder, '/lib/native')
-                if (nativeFolder.exists()) {
-                    def currentPlatform = ''
-                    def nativePaths = ''
-                    fileTree(dir: nativeFolder).files.each {
-                        def path = resourcesFolder.toPath().relativize(it.toPath())
-                        if (path.nameCount != 5) {
-                            throw new GradleException("Invalid native library path in resource folder: " + path +
-                                    ". Path must be of the form 'lib/native/{osname}/{arch}/{libname}.{ext}'")
-                        }
-
-                        // lib paths must be grouped by platform (os and processor)
-                        def osname = path.getName(2)
-                        def proc = path.getName(3)
-                        def platform = 'osname=' + osname + '; processor=' + proc
-                        if (platform != currentPlatform) {
-                            nativePaths = platform + (nativePaths.isEmpty() ? '' : ', ' + nativePaths)
-                            currentPlatform = platform;
-                        }
-
-                        nativePaths = path.toString().replace('\\', '/') + '; ' + nativePaths
-                    }
-
-                    attributes 'Bundle-NativeCode': nativePaths
-                }
+                attributes 'OSH-Core-Version': oshCoreVersion
             }
         }
     }
-    configurations {
-        embeddedApi
-        embeddedImpl
-        embedded
-        embedded.extendsFrom(embeddedApi, embeddedImpl)
-        api.extendsFrom(embeddedApi)
-        implementation.extendsFrom(embeddedImpl)
-    }
 
-    // add project dependency to proper configuration depending on version
-    // this is used to build different zip distributions
+    /* -----------------------------------------------------------
+        BUILD MANIFESTS
+    ----------------------------------------------------------- */
     afterEvaluate { p ->
 
         rootProject.dependencies {
@@ -327,7 +251,7 @@ subprojects {
                     if (p.hasProperty('buildNumber') && p.buildNumber != null && !p.buildNumber.isEmpty())
                         attributes 'Bundle-BuildNumber': p.buildNumber
                     if (!attributes['Bundle-License'])
-                        attributes 'Bundle-License': 'MPL 2.0 (http://mozilla.org/MPL/2.0)'
+                        attributes 'Bundle-License': 'Proprietary – All rights reserved. No redistribution or modification permitted.'
                     if (!attributes['Bundle-Copyright'] && attributes['Bundle-Vendor'])
                         attributes 'Bundle-Copyright': 'Copyright (c) ' + attributes['Bundle-Vendor'] + '. All Rights Reserved'
                 }
@@ -337,84 +261,78 @@ subprojects {
             p.jar {
                 manifest {
                     from p.osgi.manifest
+                    attributes 'OSH-Core-Version': oshCoreVersion
                 }
             }
+        }
+    }
 
-            // maven artifact content
-            p.publishing {
-                publications {
-                    mavenJava(MavenPublication) {
-                        from components.java
+    /* -----------------------------------------------------------
+       PUBLISHING (CLEAN + DEV FLAG SUPPORT)
+    ----------------------------------------------------------- */
 
-                        // Publish the OSGi bundle JAR as an additional artifact
-                        artifact(p.tasks.osgi) {
-                            classifier = 'bundle'
-                        }
-                        
-                        pom.withXml {
-                            asNode().get('version') + ({
-                                resolveStrategy = Closure.DELEGATE_FIRST
-                                name p.description
-                                if (p.details != null)
-                                    description p.details
-                                url 'http://www.opensensorhub.org'
-                                licenses {
-                                    license {
-                                        name 'Mozilla Public License Version 2.0'
-                                        url 'http://www.mozilla.org/MPL/2.0'
-                                        distribution 'repo'
-                                    }
-                                }
-                                scm {
-                                    url 'https://github.com/opensensorhub/osh-addons'
-                                    connection 'scm:git:git://github.com/opensensorhub/osh-addons.git'
-                                }
-                                issueManagement {
-                                    url 'https://github.com/opensensorhub/osh-addons/issues'
-                                    system 'GitHub Issues'
-                                }
-                            } >> p.pom)
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                from components.java
+
+                artifact(tasks.osgi) {
+                    classifier = 'bundle'
+                }
+
+                pom {
+                    name = project.description
+                    description = project.hasProperty('details') && project.details ? project.details : project.description
+                    url = 'https://georobotix.us'
+                    licenses {
+                        license {
+                            name = 'Proprietary – All rights reserved'
+                            url = 'https://georobotix.us/legal'
+                            distribution = 'repo'
                         }
                     }
-                }
-                repositories {
-                    //mavenLocal()
-                    maven {
-                        name = "GitHubPackages"
-                        url = "https://maven.pkg.github.com/opensensorhub/osh-addons"
-                        credentials {
-                            username = System.getenv("GITHUB_ACTOR")
-                            password = System.getenv("GITHUB_TOKEN")
-                        }
+                    scm {
+                        url = 'https://github.com/Botts-Innovative-Research/osh-no-code'
+                        connection = 'scm:git:git://github.com/Botts-Innovative-Research/osh-no-code.git'
                     }
+                    issueManagement {
+                        url = 'https://github.com/Botts-Innovative-Research/osh-no-code/issues'
+                        system = 'GitHub Issues'
+                    }
+                    properties.put("coreVersion", oshCoreVersion)
                 }
             }
+        }
 
-            p.tasks.named("generateMetadataFileForMavenJavaPublication") {
-                doFirst {
-                    if (System.getenv("GITHUB_ACTOR") == null) {
-                        throw new Exception("Environment variable GITHUB_ACTOR not set. Please set to your github username.")
-                    }
+        repositories {
+            maven {
+                name = "Nexus"
 
-                    if (System.getenv("GITHUB_TOKEN") == null) {
-                        throw new Exception("Environment variable GITHUB_TOKEN not set. Please generate and set to your personal access token: https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens")
-                    }
+                if (project.version.toString().endsWith("SNAPSHOT")) {
+                    url = System.getenv("NEXUS_REPO_SNAPSHOT")
+                } else {
+                    url = System.getenv("NEXUS_REPO_RELEASE")
+                }
+
+                credentials {
+                    username = System.getenv("NEXUS_ACTOR")
+                    password = System.getenv("NEXUS_TOKEN")
                 }
             }
+        }
+    }
 
-            p.tasks.named("publishMavenJavaPublicationToGitHubPackagesRepository") {
-                onlyIf {
-                    //
-                    MavenArtifactRepository repo = repository as MavenArtifactRepository;
-                    MavenPublication pub = publication as MavenPublication;
+    /* -----------------------------------------------------------
+       SAFETY CHECKS
+    ----------------------------------------------------------- */
 
-                    HttpURLConnection connection = new URL("$repo.url/${pub.groupId.replace('.', '/')}/$pub.artifactId/$pub.version/$pub.artifactId-${pub.version}.jar").openConnection();
-                    connection.setRequestMethod("GET");
-                    connection.setRequestProperty("Authorization", "Basic ${new String(Base64.getEncoder().encode("$repo.credentials.username:$repo.credentials.password".bytes))}");
-                    connection.connect();
-                    return connection.responseCode == 404;
-                }
-            }
+    tasks.named("generateMetadataFileForMavenJavaPublication") {
+        doFirst {
+            if (!System.getenv("NEXUS_ACTOR"))
+                throw new Exception("NEXUS_ACTOR not set")
+
+            if (!System.getenv("NEXUS_TOKEN"))
+                throw new Exception("NEXUS_TOKEN not set")
         }
     }
 
@@ -422,7 +340,10 @@ subprojects {
     clean.dependsOn(cleanReadmes, cleanBundles)
 }
 
-// create one configuration for each distribution
+/* -----------------------------------------------------------
+   DISTRIBUTION CONFIGS
+----------------------------------------------------------- */
+
 configurations {
     stable
     dev
