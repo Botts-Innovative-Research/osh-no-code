@@ -23,12 +23,12 @@ subprojects.files.each { File projectFile ->
 
 // ******************************** Uncomment if wanting to run debug **************************************************
 
-subprojects = fileTree("$rootDir/test").include( '**/build.gradle') as FileTree
-subprojects.files.each { File f ->
-    File projectFolder = f.parentFile
-    if (projectFolder != rootDir) {
-        String projectName = ':' + projectFolder.name
-        include projectName
-        project(projectName).projectDir = projectFolder
-    }
-}
+//subprojects = fileTree("$rootDir/test").include( '**/build.gradle') as FileTree
+//subprojects.files.each { File f ->
+//    File projectFolder = f.parentFile
+//    if (projectFolder != rootDir) {
+//        String projectName = ':' + projectFolder.name
+//        include projectName
+//        project(projectName).projectDir = projectFolder
+//    }
+//}
