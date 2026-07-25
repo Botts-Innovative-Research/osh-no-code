@@ -158,17 +158,17 @@ jobs:
         if: steps.changed.outputs.modules != '' && (env.SNAPSHOT == 'true' || env.RELEASE == 'true')
         run: |
           GRADLE_TASKS=""
-          
+
           for DIR in ${{ steps.changed.outputs.modules }}; do
             if [ -f "$DIR/build.gradle" ] || [ -f "$DIR/build.gradle.kts" ]; then
-              GRADLE_TASKS="$GRADLE_TASKS :$DIR:publish"
+              GRADLE_TASKS="$GRADLE_TASKS :$(basename "$DIR"):publish"
             fi
           done
-
+          
           if [ -z "$GRADLE_TASKS" ]; then
             echo "No deployable submodules detected for publication."
             exit 0
           fi
-
+          
           echo "Executing targeted publication for:$GRADLE_TASKS"
           ./gradlew $GRADLE_TASKS -Psnapshot=$SNAPSHOT --no-daemon
