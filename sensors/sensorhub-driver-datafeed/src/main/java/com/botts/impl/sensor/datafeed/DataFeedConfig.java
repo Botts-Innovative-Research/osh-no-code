@@ -35,7 +35,7 @@ public class DataFeedConfig extends SensorConfig {
      */
     @DisplayInfo.Required
     @DisplayInfo(desc = "Serial number or unique identifier")
-    public String serialNumber = "001";
+    public String serialNumber;
 
     @DisplayInfo.Required
     @DisplayInfo(label = "Communication Type", desc = "Communication provider to use (stream or message queue)")

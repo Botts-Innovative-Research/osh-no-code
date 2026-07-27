@@ -25,9 +25,9 @@ jobs:
       NEXUS_REPO_RELEASE: ${{ vars.NEXUS_REPO_RELEASE }}
       OSH_CORE_VERSION: ${{ vars.OSH_CORE_VERSION }}
 
-      # Snapshot flag: develop = snapshot, everything else = release
-      SNAPSHOT: ${{ github.ref == 'refs/heads/develop' }}
-      RELEASE: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/release/*' || github.ref == 'refs/heads/hotfix/*'}}
+      # FIXED: Uses github.ref_name to safely detect true target branches on both PUSH and PR events
+      SNAPSHOT: ${{ github.ref_name == 'develop' }}
+      RELEASE: ${{ github.ref_name == 'main' || startsWith(github.ref_name, 'release/') || startsWith(github.ref_name, 'hotfix/') }}
 
     steps:
       - name: Checkout
@@ -49,6 +49,10 @@ jobs:
             ~/.gradle/wrapper
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
 
+      # FIXED: Prevents "Permission Denied" crashes when calling the wrapper
+      - name: Make Gradle Wrapper Executable
+        run: chmod +x gradlew
+
       # ---------------------------------------------------------
       # Detect changed modules
       # ---------------------------------------------------------
@@ -57,33 +61,46 @@ jobs:
         run: |
           echo "Detecting changed modules..."
 
-          git fetch --unshallow || true
-          git fetch origin --prune
-
           if [ "${{ github.event_name }}" = "pull_request" ]; then
+            # Ensure the PR base branch commit tracking metadata is pulled locally
+            git fetch origin ${{ github.base_ref }} --depth=100
             BASE_SHA="${{ github.event.pull_request.base.sha }}"
           else
-            BASE_SHA=$(git merge-base HEAD origin/${{ github.ref_name }} || git merge-base HEAD origin/main)
+            BASE_SHA="${{ github.event.before }}"
           fi
 
-          echo "Base SHA: $BASE_SHA"
+          # Fallback if it is a brand new branch with no previous tracking history
+          if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ]; then
+            git fetch origin main --depth=1
+            BASE_SHA=$(git rev-parse origin/main)
+          fi
 
-          git diff --name-only $BASE_SHA HEAD > changed.txt
+          echo "Base SHA determined: $BASE_SHA"
+          echo "base_sha=$BASE_SHA" >> $GITHUB_OUTPUT
 
-          echo "Changed files:"
-          cat changed.txt
+          git diff --name-only $BASE_SHA HEAD > changed_files.txt
+          echo "--- Changed Files ---"
+          cat changed_files.txt
+          echo "---------------------"
 
           MODULES=""
-          while read FILE; do
+          while IFS= read -r FILE; do
+            [ -z "$FILE" ] && continue
             DIR=$(dirname "$FILE")
-            [ "$DIR" = "." ] && continue
 
-            if [ -f "$DIR/build.gradle" ] || [ -f "$DIR/build.gradle.kts" ]; then
-              MODULES="$MODULES $DIR"
-            fi
-          done < changed.txt
+            while [ "$DIR" != "." ] && [ "$DIR" != "/" ]; do
+              if [ -f "$DIR/build.gradle" ] || [ -f "$DIR/build.gradle.kts" ]; then
+                MODULES="$MODULES $DIR"
+                break
+              fi
+              DIR=$(dirname "$DIR")
+            done
+          done < changed_files.txt
 
-          echo "modules=$MODULES" >> $GITHUB_OUTPUT
+          UNIQUE_MODULES=$(echo "$MODULES" | xargs -n1 2>/dev/null | sort -u | xargs)
+
+          echo "Detected Gradle Modules: $UNIQUE_MODULES"
+          echo "modules=$UNIQUE_MODULES" >> $GITHUB_OUTPUT
 
       # ---------------------------------------------------------
       # Enforce version bumps
@@ -92,27 +109,36 @@ jobs:
         if: steps.changed.outputs.modules != ''
         run: |
           FAILED=0
-          BASE="${{ github.base_ref }}"
-          
-          # Fallback for push events (base_ref is empty)
-          if [ -z "$BASE" ]; then
-            BASE="${{ github.ref_name }}"
-          fi
+          BASE_SHA="${{ steps.changed.outputs.base_sha }}"
           
           for DIR in ${{ steps.changed.outputs.modules }}; do
-            OLD_VER=$(git show origin/$BASE:$DIR/build.gradle 2>/dev/null \
-              | grep -E "version\s*=" \
-              | head -1 \
-              | sed "s/.*=//; s/[\"']//g; s/ //g")
+            echo "Checking version bump for module: $DIR"
           
-            NEW_VER=$(grep -E "version\s*=" $DIR/build.gradle \
-              | head -1 \
-              | sed "s/.*=//; s/[\"']//g; s/ //g")
+            # FIXED: Added logic to verify if commit references are readable to prevent Git object crashes
+            if git show "$BASE_SHA:$DIR/build.gradle" >/dev/null 2>&1; then
+              OLD_VER=$(git show "$BASE_SHA:$DIR/build.gradle" | grep -E "version\s*=" | head -1 | sed "s/.*=//; s/[\"']//g; s/ //g")
+            elif git show "$BASE_SHA:$DIR/build.gradle.kts" >/dev/null 2>&1; then
+              OLD_VER=$(git show "$BASE_SHA:$DIR/build.gradle.kts" | grep -E "version\s*=" | head -1 | sed "s/.*=//; s/[\"']//g; s/ //g")
+            else
+              OLD_VER="NEW_MODULE"
+            fi
           
-            echo "$DIR old=$OLD_VER new=$NEW_VER"
+            if [ -f "$DIR/build.gradle" ]; then
+              NEW_VER=$(grep -E "version\s*=" "$DIR/build.gradle" | head -1 | sed "s/.*=//; s/[\"']//g; s/ //g")
+            else
+              NEW_VER=$(grep -E "version\s*=" "$DIR/build.gradle.kts" | head -1 | sed "s/.*=//; s/[\"']//g; s/ //g")
+            fi
           
-            if [ "$OLD_VER" = "$NEW_VER" ]; then
+            echo "  -> Old version: $OLD_VER"
+            echo "  -> New version: $NEW_VER"
+          
+            if [ "$OLD_VER" = "NEW_MODULE" ]; then
+              echo "  -> OK: New module detected."
+            elif [ "$OLD_VER" = "$NEW_VER" ] || [ -z "$NEW_VER" ]; then
+              echo "  -> ERROR: Version was not bumped or is missing in $DIR!"
               FAILED=1
+            else
+              echo "  -> OK: Version bumped successfully."
             fi
           done
           
@@ -125,8 +151,24 @@ jobs:
         run: ./gradlew clean build --no-daemon -Psnapshot=$SNAPSHOT
 
       # ---------------------------------------------------------
-      # Publish changed OR missing modules
+      # Publish ONLY changed modules
       # ---------------------------------------------------------
       - name: Publish
-        if: env.SNAPSHOT == 'true' || env.RELEASE == 'true'
-        run: ./gradlew publish -Psnapshot=$SNAPSHOT --no-daemon
+        # FIXED: Env checks match string literal conditions perfectly across branches
+        if: steps.changed.outputs.modules != '' && (env.SNAPSHOT == 'true' || env.RELEASE == 'true')
+        run: |
+          GRADLE_TASKS=""
+
+          for DIR in ${{ steps.changed.outputs.modules }}; do
+            if [ -f "$DIR/build.gradle" ] || [ -f "$DIR/build.gradle.kts" ]; then
+              GRADLE_TASKS="$GRADLE_TASKS :$(basename "$DIR"):publish"
+            fi
+          done
+          
+          if [ -z "$GRADLE_TASKS" ]; then
+            echo "No deployable submodules detected for publication."
+            exit 0
+          fi
+          
+          echo "Executing targeted publication for:$GRADLE_TASKS"
+          ./gradlew $GRADLE_TASKS -Psnapshot=$SNAPSHOT --no-daemon

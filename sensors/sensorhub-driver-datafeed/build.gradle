@@ -1,7 +1,7 @@
 description = 'Data Feed'
 ext.details = "A driver for capturing various data feeds"
 
-version = '1.0.1'
+version = '1.0.2'
 if (project.hasProperty("snapshot") && project.property("snapshot") == "true") {
     version = "${version}-SNAPSHOT"
 }

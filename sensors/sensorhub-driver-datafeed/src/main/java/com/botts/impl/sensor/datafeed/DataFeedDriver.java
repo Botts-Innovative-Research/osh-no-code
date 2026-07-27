@@ -35,7 +35,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * and performing initialization and shutdown for the driver and its outputs.
  */
 public class DataFeedDriver extends AbstractSensorModule<DataFeedConfig> {
-    static final String UID_PREFIX = "urn:osh:driver:datafeed:";
+    static final String UID_PREFIX = "urn:osh:sensor:georobotix:";
     static final String XML_PREFIX = "DATAFEED_DRIVER_";
 
     private static final Logger logger = LoggerFactory.getLogger(DataFeedDriver.class);
