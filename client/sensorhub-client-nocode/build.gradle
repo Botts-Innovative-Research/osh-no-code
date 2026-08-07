@@ -1,0 +1,37 @@
+description = 'No Code Client'
+ext.details = "A client module for building datastream mappings and encoding data to different outbound formats"
+version = '1.0.0'
+
+dependencies {
+    implementation 'org.sensorhub:sensorhub-core:' + oshCoreVersion
+
+    implementation project(':sensorhub-parser-utils')
+    implementation project(':sensorhub-ui-nocode')
+
+    testImplementation('junit:junit:4.13.1')
+}
+
+test {
+    useJUnit()
+}
+
+osgi {
+    manifest {
+        attributes ('Bundle-Vendor': 'GeoRobotix Innovative Research, Inc.')
+        attributes ('Bundle-Activator': 'com.georobotix.impl.client.nocode.Activator')
+    }
+}
+
+ext.pom >>= {
+    developers {
+        developer {
+            id 'kalynstricklin'
+            name 'Kalyn Stricklin'
+            organization 'GeoRobotix Innovative Research'
+            organizationUrl 'https://georobotix.us'
+        }
+    }
+}
+repositories {
+    mavenCentral()
+}
