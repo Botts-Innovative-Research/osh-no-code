@@ -8,7 +8,12 @@ if (project.hasProperty("snapshot") && project.property("snapshot") == "true") {
 
 dependencies {
   implementation 'org.sensorhub:sensorhub-core:' + oshCoreVersion
-  embeddedImpl 'org.apache.kafka:kafka-clients:4.1.2'
+  embeddedImpl 'org.apache.kafka:kafka-clients:4.4.0'
+  constraints {
+    // override vulnerable compression libraries bundled with kafka-clients 4.1.2
+    embeddedImpl('org.xerial.snappy:snappy-java:1.1.10.9')   // CVE-2026-108106, CVE-2026-93451
+    embeddedImpl('at.yawk.lz4:lz4-java:1.11.4')              // CVE-2026-106451
+  }
 }
 
 test {
