@@ -1,7 +1,7 @@
 description = 'Data Feed'
 ext.details = "A driver for capturing various data feeds"
 
-version = '1.1.1'
+version = '2.0.0'
 if (project.hasProperty("snapshot") && project.property("snapshot") == "true") {
     version = "${version}-SNAPSHOT"
 }
@@ -19,7 +19,6 @@ dependencies {
     // need for protobuf custom form
     implementation project(':sensorhub-parser-protobuf')
     embeddedImpl "com.google.protobuf:protobuf-java:4.31.1"
-    embeddedImpl "com.google.protobuf:protobuf-java-util:4.31.1"
     embeddedImpl("com.google.protobuf:protobuf-java-util:4.31.1") {
         // Guava is provided by OSH core (33.7.2-jre, CVE-2026-102554)
         exclude group: 'com.google.guava'
