@@ -11,11 +11,19 @@ allprojects {
 
 apply from: 'readmes.gradle'
 
-if (!System.getenv("OSH_CORE_VERSION"))
-    throw new Exception("OSH_CORE_VERSION not set")
+def nexusRepoUrl = findProperty("NEXUS_REPO_URL") ?: System.getenv("NEXUS_REPO_URL")
+def nexusActor = findProperty("NEXUS_ACTOR") ?: System.getenv("NEXUS_ACTOR")
+def nexusToken = findProperty("NEXUS_TOKEN") ?: System.getenv("NEXUS_TOKEN")
+def nexusSnapshotRepo = findProperty("NEXUS_REPO_SNAPSHOT") ?: System.getenv("NEXUS_REPO_SNAPSHOT")
+def nexusReleaseRepo = findProperty("NEXUS_REPO_RELEASE") ?: System.getenv("NEXUS_REPO_RELEASE")
+def oshCoreVersionValue = findProperty("OSH_CORE_VERSION") ?: System.getenv("OSH_CORE_VERSION")
+
+if (!oshCoreVersionValue) {
+    throw new GradleException("OSH_CORE_VERSION not set. Define it in gradle.properties or as an environment variable.")
+}
 
 ext {
-    oshCoreVersion = System.getenv("OSH_CORE_VERSION")
+    oshCoreVersion = oshCoreVersionValue
 }
 
 description = 'NoCode Add-ons'
@@ -98,10 +106,10 @@ subprojects {
 
         maven {
             name = 'nexus'
-            url = uri(System.getenv("NEXUS_REPO_URL"))
+            url = uri(nexusRepoUrl)
             credentials {
-                username = System.getenv("NEXUS_ACTOR")
-                password = System.getenv("NEXUS_TOKEN")
+                username = nexusActor
+                password = nexusToken
             }
         }
     }
@@ -309,14 +317,14 @@ subprojects {
                 name = "Nexus"
 
                 if (project.version.toString().endsWith("SNAPSHOT")) {
-                    url = System.getenv("NEXUS_REPO_SNAPSHOT")
+                    url = uri(nexusSnapshotRepo)
                 } else {
-                    url = System.getenv("NEXUS_REPO_RELEASE")
+                    url = uri(nexusReleaseRepo)
                 }
 
                 credentials {
-                    username = System.getenv("NEXUS_ACTOR")
-                    password = System.getenv("NEXUS_TOKEN")
+                    username = nexusActor
+                    password = nexusToken
                 }
             }
         }
@@ -328,10 +336,10 @@ subprojects {
 
     tasks.named("generateMetadataFileForMavenJavaPublication") {
         doFirst {
-            if (!System.getenv("NEXUS_ACTOR"))
+            if (!nexusActor)
                 throw new Exception("NEXUS_ACTOR not set")
 
-            if (!System.getenv("NEXUS_TOKEN"))
+            if (!nexusToken)
                 throw new Exception("NEXUS_TOKEN not set")
         }
     }
